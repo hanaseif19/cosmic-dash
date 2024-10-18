@@ -1,4 +1,4 @@
-
+//
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #include <cmath>
@@ -28,7 +28,8 @@ float gravity=3.0f; // kol mara benazel men el distance ad eh w howa beyenzel me
 float jumpSpeed=50.0f; // 3aks el gravity bas el fo2
 bool isDucking = false; // tracks whether he's ducking or not according to lower arrow key press
 float duckingDistance=0; // distnce he ducks down
-// for the animated background stars (the greyscale ones)
+bool isFlying=false;
+int scoreAdditionFactor=1;
 //-------------------------------- CHARACTER RELATED -----------------------------------
 
 //-------------------------------- OBSTACLES RELATED -----------------------------------
@@ -44,6 +45,24 @@ std::vector<Obstacle> obstacles;
 float obstacleTimer = 0.0f;
 float obstacleSpeed = 4.0f;
 //-------------------------------- OBSTACLES RELATED -----------------------------------
+//-------------------------------- POWER-UPS RELATED -----------------------------------
+//float powerUp = 0.0f;
+struct powerUpCoin {
+    float x;
+    float y;
+   
+};
+std::vector<powerUpCoin> coins; // data structure to hold of the all tha coins
+
+struct powerUpFly {
+    float x;
+    float y;
+   
+};
+std::vector<powerUpFly> flyingPowerUp; // data structure to hold of the all tha coins
+
+//-------------------------------- POWER-UPS RELATED -----------------------------------
+
 //-------------------------------- COLLECTIBLES RELATED -----------------------------------
 
 float collectibleRotationAngle = 0.0f;
@@ -177,45 +196,58 @@ void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
 }
 
 void drawCharacter() {
+    glPushMatrix(); // Save the current transformation state
 
-//    if (isDucking) {
+    // Check if the character is flying and adjust its position
+    if (isFlying) {
+        characterY = windowHeight - 200.0f; // Position the character at the ceiling
+       //printf("HES FLYINGG");
         
-        glColor3f(0.3f, 0.8f, 0.3f);
-        drawCircle(characterX,characterY-duckingDistance, 30.0f, 50);
-        glColor3f(1.0f, 0.4f, 0.5f);
-   
-            drawTriangle(characterX-15, characterY+25-duckingDistance, characterX+15,characterY+25-duckingDistance, characterX, characterY+60-duckingDistance);
-    
-        glColor3f(1.0f, 1.0f, 1.0f);
- 
-            drawCircle(characterX-10, characterY+10-duckingDistance, 10.0f, 30);
-           drawCircle(characterX+15, characterY+10-duckingDistance, 10.0f, 30);
-    
-        glColor3f(0.0f, 0.0f, 0.0f);
-        drawCircle(characterX-8.0, characterY+12-duckingDistance, 4.0f, 20);
-        drawCircle(characterX+17, characterY+12-duckingDistance, 4.0f, 20);
-    
-        glColor3f(0.3f, 0.8f, 0.3f);
-    
-            glBegin(GL_LINES);
-            glVertex2f(characterX-20, characterY-10-duckingDistance); glVertex2f(characterX-50, characterY-150);
-            glVertex2f(characterX-10, characterY-10-duckingDistance); glVertex2f(characterX-20, characterY-150);
-            glVertex2f(characterX, characterY-10-duckingDistance); glVertex2f(characterX+10, characterY-150);
-            glVertex2f(characterX+10, characterY-10-duckingDistance); glVertex2f(characterX+40, characterY-150);
-            glEnd();
-            glColor3f(1.0f, 0.0f, 1.0f);
-            glPointSize(5.0f);
-            glBegin(GL_POINTS);
-            glVertex2f(characterX-50, characterY-148);
-            glVertex2f(characterX-20,  characterY-148);
-            glVertex2f(characterX+10,  characterY-148);
-            glVertex2f(characterX+40,  characterY-148);
-            glEnd();
-           glEnd();
-      
+        // Move the character to its position before scaling
+        glTranslatef(characterX, characterY, 0.0f);
+        
+        // If flying, reflect the character vertically
+        glScalef(1.0f, -1.0f, 1.0f); // Flip in the Y direction
+    } else {
+        // For normal walking position, just translate
+        glTranslatef(characterX, characterY, 0.0f);
+    }
 
-  
+    // Draw the character
+    glColor3f(0.3f, 0.8f, 0.3f);
+    drawCircle(0.0f, -duckingDistance, 30.0f, 50); // Centered at the origin
+
+    glColor3f(1.0f, 0.4f, 0.5f);
+    drawTriangle(-15.0f, 25.0f - duckingDistance, 15.0f, 25.0f - duckingDistance, 0.0f, 60.0f - duckingDistance);
+    
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawCircle(-10.0f, 10.0f - duckingDistance, 10.0f, 30);
+    drawCircle(15.0f, 10.0f - duckingDistance, 10.0f, 30);
+    
+    glColor3f(0.0f, 0.0f, 0.0f);
+    drawCircle(-8.0f, 12.0f - duckingDistance, 4.0f, 20);
+    drawCircle(17.0f, 12.0f - duckingDistance, 4.0f, 20);
+    
+    glColor3f(0.3f, 0.8f, 0.3f);
+    glBegin(GL_LINES);
+    glVertex2f(-20.0f, -10.0f - duckingDistance); glVertex2f(-50.0f, -150.0f);
+    glVertex2f(-10.0f, -10.0f - duckingDistance); glVertex2f(-20.0f, -150.0f);
+    glVertex2f(0.0f, -10.0f - duckingDistance); glVertex2f(10.0f, -150.0f);
+    glVertex2f(10.0f, -10.0f - duckingDistance); glVertex2f(40.0f, -150.0f);
+    glEnd();
+
+    glColor3f(1.0f, 0.0f, 1.0f);
+    glPointSize(5.0f);
+    glBegin(GL_POINTS);
+    glVertex2f(-50.0f, -148);
+    glVertex2f(-20.0f, -148);
+    glVertex2f(10.0f, -148);
+    glVertex2f(40.0f, -148);
+    glEnd();
+
+    glPopMatrix(); // Restore the previous transformation state
 }
+
 
 void drawText(const char* text, float x, float y) {
     glRasterPos2f(x, y);
@@ -227,10 +259,10 @@ void drawText(const char* text, float x, float y) {
 void drawHealth() {
    
         float spacing = 35.0f; // Spacing between rockets
-        float startX = 30.0f;  // Starting x position
+        float startX = 25.0f;  // Starting x position
 
         for (int i = 0; i < health; i++) {
-            drawRocket(startX + i * spacing, windowHeight-120); // Draw rockets horizontally
+            drawRocket(startX + i * spacing, windowHeight-50); // Draw rockets horizontally
         }
 }
 void drawObstacle(float x, float y, float height) {
@@ -246,6 +278,14 @@ void drawObstacle(float x, float y, float height) {
         drawCircle(x - 15.0f, y - 2.5f, 1.25f, 20);
         drawCircle(x, y - 2.5f, 1.25f, 20);
         drawCircle(x + 15.0f, y - 2.5f, 1.25f, 20);
+    
+}
+void drawFlyingPowerUp(float x, float y) {
+
+   
+        glColor3f(1.0f, 0.75f, 0.8f);
+        
+        drawCircle(x, y , 15.0f, 30);
     
 }
 void drawGround() {
@@ -296,7 +336,7 @@ void drawGround() {
 }
 
 void drawStar(float centerX, float centerY, float outerRadius, float innerRadius, int points) {
-    glColor3f(0.0f, 0.0f, 0.0f); // Set star color to yellow
+    glColor3f(1.0f, 1.0f, 1.0f); // Set star color to yellow
 
     glBegin(GL_LINE_LOOP); // Start drawing a line loop
     for (int i = 0; i < points * 2; i++) {
@@ -308,34 +348,92 @@ void drawStar(float centerX, float centerY, float outerRadius, float innerRadius
     glEnd();
 }
 void drawUpperFrame() {
-    glColor3f(0.5f, 0.5f, 0.5f);  // Gray color
+    // Set the width for each rectangle
+    float rectWidth = 700.0f / 3.0f; // Width of each rectangle
+
+    glColor3f(0.678f, 0.847f, 0.902f);  // A light sky blue
 
     // 1. Top-left rectangle
     glBegin(GL_QUADS);
     glVertex2f(0.0f, windowHeight - 50.0f);
-    glVertex2f(150.0f, windowHeight - 50.0f);
-    glVertex2f(150.0f, windowHeight);
+    glVertex2f(rectWidth, windowHeight - 50.0f);  // Width of the left rectangle
+    glVertex2f(rectWidth, windowHeight);
     glVertex2f(0.0f, windowHeight);
     glEnd();
-    glColor3f(0.4f, 0.7f, 1.0f);  // Gray color
-    // 2. Top-right rectangle
+    
+    glColor3f(0.0f, 0.478f, 0.651f);  // A medium teal blue
+
+    // 2. Middle rectangle
     glBegin(GL_QUADS);
-    glVertex2f(windowWidth - 150.0f, windowHeight - 50.0f);
-    glVertex2f(windowWidth, windowHeight - 50.0f);
-    glVertex2f(windowWidth, windowHeight);
-    glVertex2f(windowWidth - 150.0f, windowHeight);
+    glVertex2f(rectWidth, windowHeight - 50.0f);  // Starts where the left rectangle ends
+    glVertex2f(rectWidth * 2.0f, windowHeight - 50.0f);  // Width of the middle rectangle
+    glVertex2f(rectWidth * 2.0f, windowHeight);
+    glVertex2f(rectWidth, windowHeight);
     glEnd();
 
-    glColor3f(0.8f, 1.0f, 0.2f);  // Gray color
-    glBegin(GL_QUADS);
-    glVertex2f(150.0f, windowHeight - 50.0f);
-    glVertex2f(windowWidth - 150.0f, windowHeight - 50.0f);
-    glVertex2f(windowWidth - 150.0f, windowHeight);
-    glVertex2f(150.0f, windowHeight);
-    glEnd();
-    drawStar(350, 675, 25,10, 5);
+    glColor3f(0.0f, 0.0f, 0.545f);  // A dark navy blue
 
+    // 3. Top-right rectangle
+    glBegin(GL_QUADS);
+    glVertex2f(rectWidth * 2.0f, windowHeight - 50.0f);  // Starts where the middle rectangle ends
+    glVertex2f(rectWidth * 3.0f, windowHeight - 50.0f);  // Width of the right rectangle
+    glVertex2f(rectWidth * 3.0f, windowHeight);
+    glVertex2f(rectWidth * 2.0f, windowHeight);
+    glEnd();
+    
+    drawStar(350, 675, 25, 10, 5);
 }
+
+
+void drawCoin(float x, float y) {
+// Draw the outer edge of the coin (golden color)
+glColor3f(1.0f, 0.84f, 0.0f); // Gold color
+drawCircle(x, y, 25.0f,25); // Outer circle
+
+// Draw the inner part of the coin (slightly darker)
+glColor3f(0.8f, 0.7f, 0.0f); // Slightly darker gold color
+drawCircle(x, y, 15.0f,15); // Inner circle
+
+// Draw the text "x2" in black
+glColor3f(0.0f, 0.0f, 0.0f); // Black color
+drawText( "x 2",x - 10, y - 10); // Position the text
+
+// Define the points for the inner square
+float squareSize = 10.0f; // Size of the inner square
+float offsetX = squareSize / 2;
+float offsetY = squareSize / 2;
+
+
+
+// Define the points for the outer square (higher above the inner square)
+float outerSquareSize = 20.0f; // Size of the outer square
+float outerOffsetX = outerSquareSize / 2;
+float outerOffsetY = outerSquareSize / 2;
+
+// Define the four points for the outer square (above each vertex)
+float outerPoints[4][2] = {
+{x - outerOffsetX, y + outerOffsetY}, // Top left (above bottom left)
+{x + outerOffsetX, y + outerOffsetY}, // Top right (above bottom right)
+{x + outerOffsetX, y - outerOffsetY}, // Bottom right (above top right)
+{x - outerOffsetX, y - outerOffsetY} // Bottom left (above top left)
+};
+
+// Draw the points above each vertex of the inner square
+glColor3f(1.0f, 0.0f, 0.0f); // Red color for points
+glPointSize(3.0f); // Set the point size to be larger
+glBegin(GL_POINTS);
+for (int i = 0; i < 4; i++) {
+glVertex2f(outerPoints[i][0], outerPoints[i][1]); // Draw each outer point
+}
+glEnd();
+//    glBegin(GL_LINES);
+//    glColor3f(0.0f, 0.0f, 1.0f); // Red color for points
+//
+//    glVertex2f(x ,y +20);
+//    glVertex2f(x+20 ,y);
+//    glEnd();
+}
+
 //-------------------------------- DRAWING HELPERS -----------------------------------
 
 //-------------------------------- COLLISIONS -----------------------------------
@@ -373,6 +471,38 @@ bool checkCollisionCollectible(float collectibleX,float collectibleY, float coll
     return isColliding;
 
 }
+bool checkCollisionFlying(float flyingX,float flyingY) {
+    float characterLeft=characterX-50;
+    float characterRight=characterX+40;
+    float characterBottom=characterY-148;
+    float CharacterTop= characterY+60-duckingDistance;
+    float flyingRight=flyingX+15;
+    float flyingTop=flyingY+15;
+    float flyingBottom=flyingY-15;
+    float flyingLeft=flyingX-15;
+    bool isColliding = !(characterRight < flyingLeft ||
+                         characterLeft > flyingRight ||
+                         CharacterTop < flyingBottom ||
+                         characterBottom > flyingTop);
+    return isColliding;
+
+}
+bool checkCollisionCoin(float coinX,float coinY) {
+    float characterLeft=characterX-50;
+    float characterRight=characterX+40;
+    float characterBottom=characterY-148;
+    float CharacterTop= characterY+60-duckingDistance;
+    float coinRight=coinX+12.5;
+    float coinTop=coinY+12.5;
+    float coinBottom=coinY-12.5;
+    float coinLeft=coinX-12.5;
+    bool isColliding = !(characterRight < coinLeft ||
+                         characterLeft > coinRight ||
+                         CharacterTop < coinBottom ||
+                         characterBottom > coinTop);
+    return isColliding;
+
+}
 //-------------------------------- COLLISIONS -----------------------------------
 //----------------------------- COLLECTIBLES ----------------------------
 void updateStars() {
@@ -395,22 +525,43 @@ void generateObstacle() {
     Obstacle obstacle;
     obstacle.x = windowWidth;
     obstacle.height = 50;
-    Collectible collectible;
-    collectible.x = windowWidth; // Start from the right side of the screen
-    collectible.height = 20; // Set a fixed height for collectibles
-
+    
     if (rand() % 2 == 0) {
         obstacle.y = 120;
-        collectible.y = 350;
     } else {
         obstacle.y = 270;
-        collectible.y = 140;
     }
-
     
-    collecibles.push_back(collectible);
-   
     obstacles.push_back(obstacle);
+    
+    int randomItem = rand() % 4; // Generates 0, 1, or 2
+    
+    if (randomItem == 0) { // Generate a collectible
+        Collectible collectible;
+        collectible.x = windowWidth; // Start from the right side of the screen
+        collectible.height = 20; // Set a fixed height for collectibles
+        // Set the collectible's Y position based on obstacle's Y position
+        collectible.y = (obstacle.y == 120) ? 350 : 140;
+        collecibles.push_back(collectible);
+    } else if (randomItem == 1) { // Generate a power-up
+        powerUpCoin p;
+        p.x = windowWidth; // Start from the right side of the screen
+        
+        p.y = (obstacle.y == 120) ? 400 : 190;
+        coins.push_back(p);
+    }
+    else if (randomItem==2)
+    {
+        powerUpFly pf;
+        pf.x = windowWidth; // Start from the right side of the screen
+        
+        pf.y = (obstacle.y == 120) ? 400 : 190;
+        flyingPowerUp.push_back(pf);
+    }
+    else
+    {
+      //  printf("NOTHING IS ABOVE OR BWLOE OBSTACLE");
+    }
 }
 
 void updateObstacles(int value) {
@@ -464,8 +615,39 @@ void updateObstacles(int value) {
             continue;
         }
         if (checkCollisionCollectible(collecibles[i].x,collecibles[i].y, collecibles[i].height)) {
-           score++;
+           score+=scoreAdditionFactor;
             collecibles.erase(collecibles.begin() + i);
+            --i;
+        }
+    }
+    for (int i = 0; i < coins.size(); ++i) {
+        coins[i].x -= (obstacleSpeed+speedMultiplier); // Move collectible to the left
+        
+        // Check if a collectible is off the screen
+        if (coins[i].x < -30.0f) {
+            coins.erase(coins.begin() + i);
+            --i;
+            continue;
+        }
+        if (checkCollisionCoin(coins[i].x,coins[i].y)) {
+            scoreAdditionFactor=2;
+            coins.erase(coins.begin() + i);
+            --i;
+        }
+    }
+    for (int i = 0; i < flyingPowerUp.size(); ++i) {
+        flyingPowerUp[i].x -= (obstacleSpeed+speedMultiplier); // Move collectible to the left
+        
+        // Check if a collectible is off the screen
+        if (flyingPowerUp[i].x < -30.0f) {
+            flyingPowerUp.erase(flyingPowerUp.begin() + i);
+            --i;
+            continue;
+        }
+        if (checkCollisionFlying(flyingPowerUp[i].x, flyingPowerUp[i].y)) {
+           // printf("I TOOK A FLYING POWER UP");
+            isFlying=true;
+            flyingPowerUp.erase(flyingPowerUp.begin() + i);
             --i;
         }
     }
@@ -538,6 +720,11 @@ void updateCharacter(int value) {
     } else {
         characterY = fixedcharacterY;  // Ensure the character stays at ground level after falling
     
+
+    }
+    if (isFlying)
+    {
+        characterY = windowHeight - 50.0f;
 
     }
 
@@ -617,6 +804,12 @@ void display() {
         for (const auto& collectible : collecibles) {
             drawStarCollectible(collectible.x, collectible.y, 30);
         }
+        for (const auto& coin : coins) {
+            drawCoin(coin.x,coin.y);
+        }
+        for (const auto& flying : flyingPowerUp) {
+            drawFlyingPowerUp(flying.x,flying.y);
+        }
         drawGround();
 
         // Time Tracking
@@ -631,9 +824,9 @@ void display() {
         sprintf(timeString, "Time: %.2f seconds", elapsedTime);  // Format time as string
         sprintf(scoreText, "Score: %d", score);
 
-        glColor3f(0.0f, 0.0f, 0.0f); // Set text color to white
-        drawText(scoreText, windowWidth - 200.0f, windowHeight - 70.0f);
-        drawText(timeString, windowWidth - 200.0f, windowHeight - 90.0f);
+        glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+        drawText(scoreText, windowWidth - 200.0f, windowHeight - 20.0f);
+        drawText(timeString, windowWidth - 200.0f, windowHeight - 40.0f);
 
       // 5 minutes is the game time
         if (elapsedTime >= 300.0f) {
@@ -691,4 +884,5 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
 
