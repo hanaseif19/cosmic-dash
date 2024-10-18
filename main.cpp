@@ -1,200 +1,72 @@
 
 #define GL_SILENCE_DEPRECATION
-#include <GLUT/glut.h>  // Use <GL/freeglut.h> on Windows/Linux
+#include <GLUT/glut.h>
 #include <cmath>
-#include <cstdio>  // For sprintf
+#include <cstdio>
 #include <iostream>
 #include <vector>
 
-// window size settings
+//-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 int windowWidth = 700;
 int windowHeight = 700;
-//score
-int score = 0;
-// health
-int health = 5;
-struct Star {
-    float x;        // Horizontal position
-    float y;        // Vertical position
-    float size;     // Size of the star
-    float brightness; // Brightness of the star
-    float speed;    // Speed of brightness change
-};
-std::vector<Star> stars; // Vector to hold all stars
-
-// for obstacles movement
-float speedMultiplier=0;
-float speedMultiplier2=0;
-float timeforBackgroundColor=0.0f;
-//float ufoY = 120;
-//float ufoXChange = -0.8f;
-//float UFOoriginalX;
-//float UFOoriginalY;
-float elapsedTime = 0.0f; // Global variable to track elapsed time
-float ufoX1 = windowWidth + 50.0f;  // Start first UFO outside the right edge
-
-float ufoX2 = windowWidth + 500.0f;
-float ufoY2 = 300;
-
-
-float characterX = 100.0f;
-float characterY = 250.0f;
-float fixedcharacterX = 100.0f;
-float fixedcharacterY = 250.0f;
-float collectibleRotationAngle = 0.0f;  // Global variable for rotation
-
-bool isJumping = false;
-float maxjumpHeight = 400.0f;
-float gravity=3.0f;
-float jumpSpeed=50.0f;
-bool isDucking = false;
-float duckingDistance=0;
+float elapsedTime = 0.0f; // to keep track of time to display it throughout the game
 bool gameEnded = false; // Variable to check if the game has ended
+float timeforBackgroundColor=0.0f;
+
+//-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
+
+//-------------------------------- CHARACTER RELATED -----------------------------------
+int score = 0; //score
+int health = 5; // health
+float characterX = 100.0f; // his current x coordinate (center of his head)
+float characterY = 250.0f; // his current y coordinate (center of his head)
+float fixedcharacterX = 100.0f; // his fixed original x coordinate (center of his head)
+float fixedcharacterY = 250.0f; // his current y coordinate (center of his head) -> to bring him back to original position when he ducks
+bool isJumping = false; // tracks whether he's jumping or not according to space key press
+float maxjumpHeight = 400.0f; // the maximum height to which he can jump to le fo2
+float gravity=3.0f; // kol mara benazel men el distance ad eh w howa beyenzel men el jump
+float jumpSpeed=50.0f; // 3aks el gravity bas el fo2
+bool isDucking = false; // tracks whether he's ducking or not according to lower arrow key press
+float duckingDistance=0; // distnce he ducks down
+// for the animated background stars (the greyscale ones)
+//-------------------------------- CHARACTER RELATED -----------------------------------
+
+//-------------------------------- OBSTACLES RELATED -----------------------------------
 
 struct Obstacle {
-    float x;       // Horizontal position
-    float y;       // Vertical position (ground level or upper level)
-    float height;  // Height of the obstacle (always 50 in this case)
+    float x;
+    float y;
+    float height;
 };
-struct Collectible {
-    float x;       // Horizontal position
-    float y;       // Vertical position (ground level or upper level)
-    float height;  // Height of the obstacle (always 50 in this case)
-};
-std::vector<Collectible> collecibles;
-
+float speedMultiplier=0; // factor by which ill increase the distance moved by obstacles , power ups and collectibles to make everything faster as time progresses
 std::vector<Obstacle> obstacles;
+
 float obstacleTimer = 0.0f;
 float obstacleSpeed = 4.0f;
-bool checkCollision(float obstacleX,float obstacleY, float obstacleHeight) {
-    float characterLeft=characterX-50;
-    float characterRight=characterX+40;
-    float characterBottom=characterY-148;
-    float CharacterTop= characterY+60-duckingDistance;
-    float obstacleRight= obstacleX+25;
-    float obstacleTop=obstacleY+20;
-    float obstacleBottom=obstacleY-15;
-    float obstacleLeft=obstacleX-25;
-    bool isColliding = !(characterRight < obstacleLeft ||
-                         characterLeft > obstacleRight ||
-                         CharacterTop < obstacleBottom ||
-                         characterBottom > obstacleTop);
-    return isColliding;
+//-------------------------------- OBSTACLES RELATED -----------------------------------
+//-------------------------------- COLLECTIBLES RELATED -----------------------------------
 
-}
-bool checkCollisionCollectible(float collectibleX,float collectibleY, float collectibleSize) {
-    float characterLeft=characterX-50;
-    float characterRight=characterX+40;
-    float characterBottom=characterY-148;
-    float CharacterTop= characterY+60-duckingDistance;
-    float collectibleRight=collectibleX+15;
-    float collectibleTop=collectibleY+15;
-    float collectibleBottom=collectibleY-15;
-    float collectibleLeft=collectibleX-15;
-    bool isColliding = !(characterRight < collectibleLeft ||
-                         characterLeft > collectibleRight ||
-                         CharacterTop < collectibleBottom ||
-                         characterBottom > collectibleTop);
-    return isColliding;
+float collectibleRotationAngle = 0.0f;
+struct Star {
+    float x;
+    float y;
+    float size;
+    float brightness;
+    float speed;
+};
+std::vector<Star> stars; // data structure to hold of the all tha stars
 
-}
-void updateStars() {
-    for (auto &star : stars) {
-        star.brightness += star.speed; // Update brightness
+struct Collectible {
+    float x;
+    float y;
+    float height;
+};
+std::vector<Collectible> collecibles;
+//-------------------------------- COLLECTIBLES RELATED -----------------------------------
 
-        // Reverse speed if brightness goes out of bounds
-        if (star.brightness > 1.0f || star.brightness < 0.0f) {
-            star.speed = -star.speed;
-            star.brightness = std::clamp(star.brightness, 0.0f, 1.0f); // Keep within bounds
-        }
-    }
-}
-// generate obstacles randomly either at a level of the character's head or on the ground
-void generateObstacle() {
-    Obstacle obstacle;
-    obstacle.x = windowWidth;
-    obstacle.height = 50;
-    Collectible collectible;
-    collectible.x = windowWidth; // Start from the right side of the screen
-    collectible.height = 20; // Set a fixed height for collectibles
+//-------------------------------- CODE LOGIC -----------------------------------
 
-    if (rand() % 2 == 0) {
-        obstacle.y = 120;        // Ground obstacle
-        collectible.y = 350; // Above the ground obstacle
-    } else {
-        obstacle.y = 270;      // Upper obstacle
-        collectible.y = 140; // Below the upper obstacle
-    }
-
-    
-    collecibles.push_back(collectible);
-   
-    obstacles.push_back(obstacle);
-}
-
-
-
-
-
-void updateObstacles(int value) {
-    updateStars();
-    obstacleTimer += 0.02f;
-    
-    // Generate a new obstacle every 2 seconds
-    if (obstacleTimer >= 2.0f) {
-        generateObstacle();
-        obstacleTimer = 0.0f;
-    }
-    collectibleRotationAngle += 0.5f;  // Adjust this value for slower or faster rotation
-       if (collectibleRotationAngle >= 360.0f) {
-           collectibleRotationAngle -= 360.0f;  // Keep the angle within 0-360 degrees
-       }
-    // Move obstacles to the left
-    for (int i = 0; i < obstacles.size(); ++i) {
-        obstacles[i].x -= obstacleSpeed; // Move obstacle
-
-        // Check if an obstacle is off the screen
-        if (obstacles[i].x < -30.0f) {
-            obstacles.erase(obstacles.begin() + i);
-            --i;
-            continue;
-        }
-        
-        // Check collision with character
-        if (checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
-            health--;
-            if (health <= 0) {
-                gameEnded = true;
-                // Stop updating the game
-                return;
-            }
-            obstacles.erase(obstacles.begin() + i);
-            --i;
-        }
-    }
-
-    // Move collectibles to the left
-    for (int i = 0; i < collecibles.size(); ++i) {
-        collecibles[i].x -= obstacleSpeed; // Move collectible to the left
-        
-        // Check if a collectible is off the screen
-        if (collecibles[i].x < -30.0f) {
-            collecibles.erase(collecibles.begin() + i);
-            --i;
-            continue;
-        }
-        if (checkCollisionCollectible(collecibles[i].x,collecibles[i].y, collecibles[i].height)) {
-           score++;
-            collecibles.erase(collecibles.begin() + i);
-            --i;
-        }
-    }
-   
-    
-    // Call this function again after 16 ms (~60 FPS)
-    glutTimerFunc(16, updateObstacles, 0);
-}
-
+//-------------------------------- DRAWING HELPERS -----------------------------------
 
 void drawCircle(float x, float y, float radius, int segments) {
     glBegin(GL_POLYGON);
@@ -236,36 +108,6 @@ void drawRocket(float x, float y) {
         glVertex2f(x + 5, y);        // Top-right corner
     glEnd();
 }
-
-void drawHealth() {
-   
-        float spacing = 35.0f; // Spacing between rockets
-        float startX = 30.0f;  // Starting x position
-
-        for (int i = 0; i < health; i++) {
-            drawRocket(startX + i * spacing, windowHeight-120); // Draw rockets horizontally
-        }
-}
-void updateCharacter(int value) {
-    if (isJumping) {
-        if (characterY < maxjumpHeight) {
-            characterY += jumpSpeed;
-        } else {
-            isJumping = false;  // Stop jumping when max height is reached
-        }
-    } else if (characterY > fixedcharacterY) {
-        characterY -= gravity;  // Gravity pulls the character back down
-    } else {
-        characterY = fixedcharacterY;  // Ensure the character stays at ground level after falling
-    
-
-    }
-
-    glutPostRedisplay(); // Request a redraw
-    glutTimerFunc(16, updateCharacter, 0); // Call this function again after 16 ms
-}
-
-
 // Function to draw the star collectible
 void drawStarCollectible(float x, float y, float size) {
     glPushMatrix();  // Save the current matrix state
@@ -317,27 +159,14 @@ void drawStarCollectible(float x, float y, float size) {
     // Print the coordinates of the collectible
    
 }
-
-
-void keyPress(unsigned char key, int x, int y) {
-    if (key == ' ') { // Space key for jump
-        if (!isJumping && characterY ==fixedcharacterY) {
-            isJumping = true;
-        }
-    }
-    if (key == GLUT_KEY_DOWN) { // Down arrow to duck
-           isDucking = true;
-       }
-}
-
-// Key release handler
-void keyUp(unsigned char key, int x, int y) {
-    if (key == ' ') { // Reset position on key release
-        isJumping = false;
-    }
-    if (key == GLUT_KEY_DOWN) { // Reset duck state
-           isDucking = false;
-       }
+void drawDiamond(float x, float y, float size, float brightness) {
+    glColor3f(brightness, brightness, brightness); // Set color based on brightness
+    glBegin(GL_QUADS);
+        glVertex2f(x, y + size);     // Top vertex
+        glVertex2f(x + size, y);     // Right vertex
+        glVertex2f(x, y - size);     // Bottom vertex
+        glVertex2f(x - size, y);     // Left vertex
+    glEnd();
 }
 
 void drawEllipse(float x, float y, float radiusX, float radiusY, int segments) {
@@ -405,20 +234,15 @@ void drawText(const char* text, float x, float y) {
     }
 }
 
-void drawUFO(float x, float y) {
-    glColor3f(0.7f, 0.7f, 0.0f);
-    drawEllipse(x, y, 50.0f, 15.0f, 50);
+void drawHealth() {
+   
+        float spacing = 35.0f; // Spacing between rockets
+        float startX = 30.0f;  // Starting x position
 
-    glColor3f(0.0f, 0.7f, 0.0f);
-    drawCircle(x, y + 10.0f, 20.0f, 30);
-
-    glColor3f(1.0f, 0.0f, 0.0f);
-    drawCircle(x - 15.0f, y - 2.5f, 2.5f, 20);
-    drawCircle(x, y - 2.5f, 2.5f, 20);
-    drawCircle(x + 15.0f, y - 2.5f, 2.5f, 20);
+        for (int i = 0; i < health; i++) {
+            drawRocket(startX + i * spacing, windowHeight-120); // Draw rockets horizontally
+        }
 }
-
-
 void drawObstacle(float x, float y, float height) {
 
    
@@ -522,6 +346,219 @@ void drawUpperFrame() {
     drawStar(350, 675, 25,10, 5);
 
 }
+//-------------------------------- DRAWING HELPERS -----------------------------------
+
+//-------------------------------- COLLISIONS -----------------------------------
+
+
+bool checkCollision(float obstacleX,float obstacleY, float obstacleHeight) {
+    float characterLeft=characterX-50;
+    float characterRight=characterX+40;
+    float characterBottom=characterY-148;
+    float CharacterTop= characterY+60-duckingDistance;
+    float obstacleRight= obstacleX+25;
+    float obstacleTop=obstacleY+20;
+    float obstacleBottom=obstacleY-15;
+    float obstacleLeft=obstacleX-25;
+    bool isColliding = !(characterRight < obstacleLeft ||
+                         characterLeft > obstacleRight ||
+                         CharacterTop < obstacleBottom ||
+                         characterBottom > obstacleTop);
+    return isColliding;
+
+}
+bool checkCollisionCollectible(float collectibleX,float collectibleY, float collectibleSize) {
+    float characterLeft=characterX-50;
+    float characterRight=characterX+40;
+    float characterBottom=characterY-148;
+    float CharacterTop= characterY+60-duckingDistance;
+    float collectibleRight=collectibleX+15;
+    float collectibleTop=collectibleY+15;
+    float collectibleBottom=collectibleY-15;
+    float collectibleLeft=collectibleX-15;
+    bool isColliding = !(characterRight < collectibleLeft ||
+                         characterLeft > collectibleRight ||
+                         CharacterTop < collectibleBottom ||
+                         characterBottom > collectibleTop);
+    return isColliding;
+
+}
+//-------------------------------- COLLISIONS -----------------------------------
+//----------------------------- COLLECTIBLES ----------------------------
+void updateStars() {
+    for (auto &star : stars) {
+        star.brightness += star.speed; // Update brightness
+
+        // Reverse speed if brightness goes out of bounds
+        if (star.brightness > 1.0f || star.brightness < 0.0f) {
+            star.speed = -star.speed;
+            star.brightness = std::clamp(star.brightness, 0.0f, 1.0f); // Keep within bounds
+        }
+    }
+}
+//----------------------------- COLLECTIBLES ----------------------------
+
+
+
+//----------------------------- OBSTACLE GENERATION AND UPDATE ----------------------------
+void generateObstacle() {
+    Obstacle obstacle;
+    obstacle.x = windowWidth;
+    obstacle.height = 50;
+    Collectible collectible;
+    collectible.x = windowWidth; // Start from the right side of the screen
+    collectible.height = 20; // Set a fixed height for collectibles
+
+    if (rand() % 2 == 0) {
+        obstacle.y = 120;
+        collectible.y = 350;
+    } else {
+        obstacle.y = 270;
+        collectible.y = 140;
+    }
+
+    
+    collecibles.push_back(collectible);
+   
+    obstacles.push_back(obstacle);
+}
+
+void updateObstacles(int value) {
+    updateStars();
+    obstacleTimer += 0.02f;
+    
+    // Generate a new obstacle every 2 seconds
+    if (obstacleTimer >= 2.0f) {
+        generateObstacle();
+        obstacleTimer = 0.0f;
+    }
+    collectibleRotationAngle += 0.5f;  // Adjust this value for slower or faster rotation
+       if (collectibleRotationAngle >= 360.0f) {
+           collectibleRotationAngle -= 360.0f;  // Keep the angle within 0-360 degrees
+       }
+    // Move obstacles to the left
+    for (int i = 0; i < obstacles.size(); ++i) {
+        obstacles[i].x -= obstacleSpeed; // Move obstacle
+
+        // Check if an obstacle is off the screen
+        if (obstacles[i].x < -30.0f) {
+            obstacles.erase(obstacles.begin() + i);
+            --i;
+            continue;
+        }
+        
+        // Check collision with character
+        if (checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
+            health--;
+            // howa 5abat hena
+           
+            
+            if (health <= 0) {
+                gameEnded = true;
+                // Stop updating the game
+                return;
+            }
+            obstacles.erase(obstacles.begin() + i);
+            --i;
+        }
+    }
+
+    // Move collectibles to the left
+    for (int i = 0; i < collecibles.size(); ++i) {
+        collecibles[i].x -= obstacleSpeed; // Move collectible to the left
+        
+        // Check if a collectible is off the screen
+        if (collecibles[i].x < -30.0f) {
+            collecibles.erase(collecibles.begin() + i);
+            --i;
+            continue;
+        }
+        if (checkCollisionCollectible(collecibles[i].x,collecibles[i].y, collecibles[i].height)) {
+           score++;
+            collecibles.erase(collecibles.begin() + i);
+            --i;
+        }
+    }
+   
+    
+    // Call this function again after 16 ms (~60 FPS)
+    glutTimerFunc(16, updateObstacles, 0);
+}
+
+//----------------------------- OBSTACLE GENERATION AND UPDATE ----------------------------
+
+
+//----------------------------- KEYBOARD ACTIONS ----------------------------
+
+void keyPress(unsigned char key, int x, int y) {
+    if (key == ' ') { // Space key for jump
+        if (!isJumping && characterY ==fixedcharacterY) {
+            isJumping = true;
+        }
+    }
+    if (key == GLUT_KEY_DOWN) { // Down arrow to duck
+           isDucking = true;
+       }
+}
+
+// Key release handler
+void keyUp(unsigned char key, int x, int y) {
+    if (key == ' ') { // Reset position on key release
+        isJumping = false;
+    }
+    if (key == GLUT_KEY_DOWN) { // Reset duck state
+           isDucking = false;
+       }
+}
+void specialKeyPress(int key, int x, int y) {
+    switch (key) {
+        case GLUT_KEY_DOWN:
+            isDucking = true;
+            duckingDistance=80;
+            glutPostRedisplay();
+            break;
+       
+    }
+}
+void specialKeyUp(int key, int x, int y) {
+    switch (key) {
+        case GLUT_KEY_DOWN:
+            isDucking = false;
+            duckingDistance=0;
+            glutPostRedisplay();
+            break;
+       
+    }
+}
+
+//----------------------------- KEYBOARD ACTIONS ----------------------------
+
+
+//----------------------------- CHARACTER ----------------------------
+
+void updateCharacter(int value) {
+    if (isJumping) {
+        if (characterY < maxjumpHeight) {
+            characterY += jumpSpeed;
+        } else {
+            isJumping = false;  // Stop jumping when max height is reached
+        }
+    } else if (characterY > fixedcharacterY) {
+        characterY -= gravity;  // Gravity pulls the character back down
+    } else {
+        characterY = fixedcharacterY;  // Ensure the character stays at ground level after falling
+    
+
+    }
+
+    glutPostRedisplay(); // Request a redraw
+    glutTimerFunc(16, updateCharacter, 0); // Call this function again after 16 ms
+}
+//----------------------------- CHARACTER ----------------------------
+
+
+//----------------------------- BACKGROUND ANIMATION ----------------------------
+
 void initStars(int numStars) {
     srand(static_cast<unsigned>(time(0))); // Seed for random number generation
     for (int i = 0; i < numStars; i++) {
@@ -536,16 +573,13 @@ void initStars(int numStars) {
     }
 }
 
+//----------------------------- BACKGROUND ANIMATION ----------------------------
 
-void drawDiamond(float x, float y, float size, float brightness) {
-    glColor3f(brightness, brightness, brightness); // Set color based on brightness
-    glBegin(GL_QUADS);
-        glVertex2f(x, y + size);     // Top vertex
-        glVertex2f(x + size, y);     // Right vertex
-        glVertex2f(x, y - size);     // Bottom vertex
-        glVertex2f(x - size, y);     // Left vertex
-    glEnd();
-}
+
+
+
+
+//--------------------------------DISPLAY -----------------------------------
 
 
 
@@ -557,7 +591,7 @@ void display() {
        if (health==0)
        {
            char endMessage[50];
-           sprintf(endMessage, "YOUU LOST");
+           sprintf(endMessage, "YOUU LOST:((");
            
            glColor3f(0.0f, 0.0f, 0.0f); // Set text color to white
 
@@ -578,15 +612,7 @@ void display() {
     else {
        
            glClearColor(1.0, 1.0, 1.0, 1.0f); // Set the background color
-        
-//        // Draw Background
-//        glBegin(GL_QUADS);
-//        glColor3f(, g, b); // Set color based on time
-//        glVertex2f(0, 0); // Bottom left
-//        glVertex2f(windowWidth, 0);  // Bottom right
-//        glVertex2f(windowWidth, windowHeight);   // Top right
-//        glVertex2f(0, windowHeight);  // Top left
-//        glEnd();
+    
 
         drawUpperFrame();  // Add the upper frame
         drawHealth();
@@ -634,32 +660,31 @@ void timer(int value) {
     glutTimerFunc(16, timer, 0); // Call timer again after 16 ms (~60 FPS)
 }
 
-void specialKeyPress(int key, int x, int y) {
-    switch (key) {
-        case GLUT_KEY_DOWN:
-            isDucking = true;
-            duckingDistance=80;
-            glutPostRedisplay();
-            break;
-       
-    }
-}
-void specialKeyUp(int key, int x, int y) {
-    switch (key) {
-        case GLUT_KEY_DOWN:
-            isDucking = false;
-            duckingDistance=0;
-            glutPostRedisplay();
-            break;
-       
-    }
-}
+//--------------------------------DISPLAY -----------------------------------
+
+
+//----------------------- RESET GAME (WITH ORIGINAL HEALTH AND SCORE---------------------------
+
+//void resetGame(int score)
+//{
+//    score=score;
+//    characterX=fixedcharacterX;
+//    characterY=fixedcharacterY;
+//    glutTimerFunc(0, updateCharacter, 0);
+//       glutTimerFunc(16, updateObstacles, 0);
+//       glutTimerFunc(0, timer, 0);
+//
+//    
+//}
+
+//-------------------------------- MAIN METHOD -----------------------------------
+
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(windowWidth, windowHeight);
     glutInitWindowPosition(150, 150);
-    glutCreateWindow("UFOs Moving Towards Character - OpenGL");
+    glutCreateWindow("UFO ALIEN GAME");
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     gluOrtho2D(0.0, windowWidth, 0.0, windowHeight);
