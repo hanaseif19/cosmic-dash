@@ -41,6 +41,7 @@ float characterX = 100.0f;
 float characterY = 250.0f;
 float fixedcharacterX = 100.0f;
 float fixedcharacterY = 250.0f;
+float collectibleRotationAngle = 0.0f;  // Global variable for rotation
 
 bool isJumping = false;
 float maxjumpHeight = 400.0f;
@@ -86,10 +87,10 @@ bool checkCollisionCollectible(float collectibleX,float collectibleY, float coll
     float characterRight=characterX+40;
     float characterBottom=characterY-148;
     float CharacterTop= characterY+60-duckingDistance;
-    float collectibleRight=collectibleX+20;
-    float collectibleTop=collectibleY+20;
-    float collectibleBottom=collectibleY-20;
-    float collectibleLeft=collectibleX-20;
+    float collectibleRight=collectibleX+15;
+    float collectibleTop=collectibleY+15;
+    float collectibleBottom=collectibleY-15;
+    float collectibleLeft=collectibleX-15;
     bool isColliding = !(characterRight < collectibleLeft ||
                          characterLeft > collectibleRight ||
                          CharacterTop < collectibleBottom ||
@@ -119,10 +120,10 @@ void generateObstacle() {
 
     if (rand() % 2 == 0) {
         obstacle.y = 120;        // Ground obstacle
-        collectible.y = 250; // Above the ground obstacle
+        collectible.y = 350; // Above the ground obstacle
     } else {
         obstacle.y = 270;      // Upper obstacle
-        collectible.y = 120; // Below the upper obstacle
+        collectible.y = 140; // Below the upper obstacle
     }
 
     
@@ -144,7 +145,10 @@ void updateObstacles(int value) {
         generateObstacle();
         obstacleTimer = 0.0f;
     }
-    
+    collectibleRotationAngle += 0.5f;  // Adjust this value for slower or faster rotation
+       if (collectibleRotationAngle >= 360.0f) {
+           collectibleRotationAngle -= 360.0f;  // Keep the angle within 0-360 degrees
+       }
     // Move obstacles to the left
     for (int i = 0; i < obstacles.size(); ++i) {
         obstacles[i].x -= obstacleSpeed; // Move obstacle
@@ -264,6 +268,14 @@ void updateCharacter(int value) {
 
 // Function to draw the star collectible
 void drawStarCollectible(float x, float y, float size) {
+    glPushMatrix();  // Save the current matrix state
+    glTranslatef(x, y, 0.0f);
+        
+        // Rotate around the Z-axis
+        glRotatef(collectibleRotationAngle, 0.0f, 0.0f, 1.0f);
+        
+        // Move back to the origin to draw the star
+        glTranslatef(-x, -y, 0.0f);
     // Draw Star (Polygon)
     glBegin(GL_POLYGON); // Start drawing the star shape
     glColor3f(0.0f, 1.0f, 1.0f); // Star color: cyan
@@ -300,6 +312,7 @@ void drawStarCollectible(float x, float y, float size) {
     }
     
     glEnd();
+    glPopMatrix();  // Restore the previous matrix state
 
     // Print the coordinates of the collectible
    
@@ -514,14 +527,15 @@ void initStars(int numStars) {
     for (int i = 0; i < numStars; i++) {
         Star star;
         star.x = rand() % windowWidth; // Random x position
-        // Random y position in the top half excluding the top 50
-        star.y = rand() % (windowHeight / 2 - 50) + (windowHeight / 2 + 50);
+        // Set y position to be within the range of 400 to 500
+        star.y = rand() % 101 + 450; // Random y position from 400 to 500 (inclusive)
         star.size = rand() % 3 + 2; // Random size between 2 and 5
         star.brightness = static_cast<float>(rand() % 100) / 100.0f; // Random brightness
         star.speed = static_cast<float>(rand() % 20 + 10) / 1000.0f; // Random speed for brightness change
         stars.push_back(star);
     }
 }
+
 
 void drawDiamond(float x, float y, float size, float brightness) {
     glColor3f(brightness, brightness, brightness); // Set color based on brightness
@@ -545,7 +559,8 @@ void display() {
            char endMessage[50];
            sprintf(endMessage, "YOUU LOST");
            
-           glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+           glColor3f(0.0f, 0.0f, 0.0f); // Set text color to white
+
            drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
            
 
@@ -555,7 +570,8 @@ void display() {
                char endMessage[50];
                sprintf(endMessage, "Game End! Score: %d", score);
                
-               glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+               glColor3f(0.0f, 0.0f, 0.0f); // Set text color to white
+
                drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2); // Center the message
            }
     }
@@ -583,7 +599,7 @@ void display() {
             drawObstacle(obstacle.x, obstacle.y, obstacle.height);
         }
         for (const auto& collectible : collecibles) {
-            drawStarCollectible(collectible.x, collectible.y, 40);
+            drawStarCollectible(collectible.x, collectible.y, 30);
         }
         drawGround();
 
@@ -599,7 +615,7 @@ void display() {
         sprintf(timeString, "Time: %.2f seconds", elapsedTime);  // Format time as string
         sprintf(scoreText, "Score: %d", score);
 
-        glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+        glColor3f(0.0f, 0.0f, 0.0f); // Set text color to white
         drawText(scoreText, windowWidth - 200.0f, windowHeight - 70.0f);
         drawText(timeString, windowWidth - 200.0f, windowHeight - 90.0f);
 
@@ -647,7 +663,7 @@ int main(int argc, char** argv) {
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     gluOrtho2D(0.0, windowWidth, 0.0, windowHeight);
-    initStars(80); // Initialize 100 stars
+    initStars(50); // Initialize 100 stars
     glutDisplayFunc(display);
     glutTimerFunc(0, updateCharacter, 0);
     glutTimerFunc(16, updateObstacles, 0);
