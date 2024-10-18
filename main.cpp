@@ -1,4 +1,4 @@
-//
+////
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #include <cmath>
@@ -47,6 +47,7 @@ float obstacleSpeed = 4.0f;
 //-------------------------------- OBSTACLES RELATED -----------------------------------
 //-------------------------------- POWER-UPS RELATED -----------------------------------
 //float powerUp = 0.0f;
+float coinAngle = 0.0f;
 struct powerUpCoin {
     float x;
     float y;
@@ -60,7 +61,9 @@ struct powerUpFly {
    
 };
 std::vector<powerUpFly> flyingPowerUp; // data structure to hold of the all tha coins
-
+float timeElapsedPlane = 0.0f; // Time or frame counter
+const float oscillationAmplitude = 5.0f; // Amplitude of the oscillation
+const float oscillationFrequency = 2.0f;
 //-------------------------------- POWER-UPS RELATED -----------------------------------
 
 //-------------------------------- COLLECTIBLES RELATED -----------------------------------
@@ -97,7 +100,7 @@ void drawCircle(float x, float y, float radius, int segments) {
 }
 void drawRocket(float x, float y) {
     // Rocket body
-    glColor3f(1.0f, 0.0f, 0.0f);  // Red color for the body
+    glColor3f(0.1f, 0.1f, 0.2f);  // Dark Galactic Teal for the body
     glBegin(GL_QUADS);  // Draw the main body
         glVertex2f(x - 5, y);        // Bottom-left
         glVertex2f(x + 5, y);        // Bottom-right
@@ -106,7 +109,7 @@ void drawRocket(float x, float y) {
     glEnd();
 
     // Rocket nose cone
-    glColor3f(0.0f, 0.0f, 1.0f);  // Blue color for the nose
+    glColor3f(1.0f, 1.0f, 0.0f);  // Luminous Yellow for the nose
     glBegin(GL_TRIANGLES);  // Draw the nose
         glVertex2f(x - 5, y + 30); // Bottom-left of triangle
         glVertex2f(x + 5, y + 30); // Bottom-right of triangle
@@ -114,7 +117,7 @@ void drawRocket(float x, float y) {
     glEnd();
 
     // Rocket fins
-    glColor3f(0.0f, 1.0f, 0.0f);  // Green color for the fins
+    glColor3f(0.0f, 0.7f, 0.6f);  // Lighter Galactic Teal for the fins
     glBegin(GL_TRIANGLES);  // Left fin
         glVertex2f(x - 5, y + 15); // Bottom-left of fin
         glVertex2f(x - 10, y);      // Bottom-left corner
@@ -127,6 +130,7 @@ void drawRocket(float x, float y) {
         glVertex2f(x + 5, y);        // Top-right corner
     glEnd();
 }
+
 // Function to draw the star collectible
 void drawStarCollectible(float x, float y, float size) {
     glPushMatrix();  // Save the current matrix state
@@ -169,6 +173,9 @@ glRotatef(collectibleRotationAngle, 0.0f, 0.0f, 1.0f);
    
 }
 void drawDiamond(float x, float y, float size, float brightness) {
+    // Ensure brightness is clamped between 0.5 and 1.0 for better visibility
+    brightness = std::max(0.5f, std::min(brightness, 1.0f));
+
     glColor3f(brightness, brightness, brightness); // Set color based on brightness
     glBegin(GL_QUADS);
         glVertex2f(x, y + size);     // Top vertex
@@ -195,59 +202,98 @@ void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
     glEnd();
 }
 
+//void drawCharacter() {
+//    glPushMatrix(); // Save the current transformation state
+//
+//    // Check if the character is flying and adjust its position
+//    if (isFlying) {
+//        characterY = windowHeight - 200.0f; // Position the character at the ceiling
+//       //printf("HES FLYINGG");
+//        
+//        // Move the character to its position before scaling
+//        glTranslatef(characterX, characterY, 0.0f);
+//        
+//        // If flying, reflect the character vertically
+//        glScalef(1.0f, -1.0f, 1.0f); // Flip in the Y direction
+//    } else {
+//        // For normal walking position, just translate
+//        glTranslatef(characterX, characterY, 0.0f);
+//    }
+//
+//    // Draw the character
+//    glColor3f(0.3f, 0.8f, 0.3f);
+//    drawCircle(0.0f, -duckingDistance, 30.0f, 50); // Centered at the origin
+//
+//    glColor3f(1.0f, 0.4f, 0.5f);
+//    drawTriangle(-15.0f, 25.0f - duckingDistance, 15.0f, 25.0f - duckingDistance, 0.0f, 60.0f - duckingDistance);
+//    
+//    glColor3f(1.0f, 1.0f, 1.0f);
+//    drawCircle(-10.0f, 10.0f - duckingDistance, 10.0f, 30);
+//    drawCircle(15.0f, 10.0f - duckingDistance, 10.0f, 30);
+//    
+//    glColor3f(0.0f, 0.0f, 0.0f);
+//    drawCircle(-8.0f, 12.0f - duckingDistance, 4.0f, 20);
+//    drawCircle(17.0f, 12.0f - duckingDistance, 4.0f, 20);
+//    
+//    glColor3f(1.0f, 0.8f, 0.3f);
+//    glBegin(GL_LINES);
+//    glVertex2f(-20.0f, -10.0f - duckingDistance-15); glVertex2f(-50.0f, -150.0f);
+//    glVertex2f(-10.0f, -10.0f - duckingDistance-15); glVertex2f(-20.0f, -150.0f);
+//    glVertex2f(0.0f, -10.0f - duckingDistance-15); glVertex2f(10.0f, -150.0f);
+//    glVertex2f(10.0f, -10.0f - duckingDistance-15); glVertex2f(40.0f, -150.0f);
+//    glEnd();
+//
+//    glColor3f(1.0f, 0.0f, 1.0f);
+//    glPointSize(5.0f);
+//    glBegin(GL_POINTS);
+//    glVertex2f(-50.0f, -148);
+//    glVertex2f(-20.0f, -148);
+//    glVertex2f(10.0f, -148);
+//    glVertex2f(40.0f, -148);
+//    glEnd();
+//
+//    glPopMatrix(); // Restore the previous transformation state
+//}
 void drawCharacter() {
-    glPushMatrix(); // Save the current transformation state
 
-    // Check if the character is flying and adjust its position
-    if (isFlying) {
-        characterY = windowHeight - 200.0f; // Position the character at the ceiling
-       //printf("HES FLYINGG");
+//    if (isDucking) {
         
-        // Move the character to its position before scaling
-        glTranslatef(characterX, characterY, 0.0f);
-        
-        // If flying, reflect the character vertically
-        glScalef(1.0f, -1.0f, 1.0f); // Flip in the Y direction
-    } else {
-        // For normal walking position, just translate
-        glTranslatef(characterX, characterY, 0.0f);
-    }
-
-    // Draw the character
-    glColor3f(0.3f, 0.8f, 0.3f);
-    drawCircle(0.0f, -duckingDistance, 30.0f, 50); // Centered at the origin
-
-    glColor3f(1.0f, 0.4f, 0.5f);
-    drawTriangle(-15.0f, 25.0f - duckingDistance, 15.0f, 25.0f - duckingDistance, 0.0f, 60.0f - duckingDistance);
+        glColor3f(0.3f, 0.8f, 0.3f);
+        drawCircle(characterX,characterY-duckingDistance, 30.0f, 50);
+        glColor3f(1.0f, 0.4f, 0.5f);
+   
+            drawTriangle(characterX-15, characterY+25-duckingDistance, characterX+15,characterY+25-duckingDistance, characterX, characterY+60-duckingDistance);
     
-    glColor3f(1.0f, 1.0f, 1.0f);
-    drawCircle(-10.0f, 10.0f - duckingDistance, 10.0f, 30);
-    drawCircle(15.0f, 10.0f - duckingDistance, 10.0f, 30);
+        glColor3f(1.0f, 1.0f, 1.0f);
+ 
+            drawCircle(characterX-10, characterY+10-duckingDistance, 10.0f, 30);
+           drawCircle(characterX+15, characterY+10-duckingDistance, 10.0f, 30);
     
-    glColor3f(0.0f, 0.0f, 0.0f);
-    drawCircle(-8.0f, 12.0f - duckingDistance, 4.0f, 20);
-    drawCircle(17.0f, 12.0f - duckingDistance, 4.0f, 20);
+        glColor3f(0.0f, 0.0f, 0.0f);
+        drawCircle(characterX-8.0, characterY+12-duckingDistance, 4.0f, 20);
+        drawCircle(characterX+17, characterY+12-duckingDistance, 4.0f, 20);
     
-    glColor3f(0.3f, 0.8f, 0.3f);
-    glBegin(GL_LINES);
-    glVertex2f(-20.0f, -10.0f - duckingDistance); glVertex2f(-50.0f, -150.0f);
-    glVertex2f(-10.0f, -10.0f - duckingDistance); glVertex2f(-20.0f, -150.0f);
-    glVertex2f(0.0f, -10.0f - duckingDistance); glVertex2f(10.0f, -150.0f);
-    glVertex2f(10.0f, -10.0f - duckingDistance); glVertex2f(40.0f, -150.0f);
-    glEnd();
+        glColor3f(1.0f, 0.8f, 0.3f);
+    
+            glBegin(GL_LINES);
+            glVertex2f(characterX-20, characterY-10-duckingDistance); glVertex2f(characterX-50, characterY-150);
+            glVertex2f(characterX-10, characterY-10-duckingDistance); glVertex2f(characterX-20, characterY-150);
+            glVertex2f(characterX, characterY-10-duckingDistance); glVertex2f(characterX+10, characterY-150);
+            glVertex2f(characterX+10, characterY-10-duckingDistance); glVertex2f(characterX+40, characterY-150);
+            glEnd();
+            glColor3f(1.0f, 0.0f, 1.0f);
+            glPointSize(5.0f);
+            glBegin(GL_POINTS);
+            glVertex2f(characterX-50, characterY-148);
+            glVertex2f(characterX-20,  characterY-148);
+            glVertex2f(characterX+10,  characterY-148);
+            glVertex2f(characterX+40,  characterY-148);
+            glEnd();
+           glEnd();
+      
 
-    glColor3f(1.0f, 0.0f, 1.0f);
-    glPointSize(5.0f);
-    glBegin(GL_POINTS);
-    glVertex2f(-50.0f, -148);
-    glVertex2f(-20.0f, -148);
-    glVertex2f(10.0f, -148);
-    glVertex2f(40.0f, -148);
-    glEnd();
-
-    glPopMatrix(); // Restore the previous transformation state
+  
 }
-
 
 void drawText(const char* text, float x, float y) {
     glRasterPos2f(x, y);
@@ -280,17 +326,100 @@ void drawObstacle(float x, float y, float height) {
         drawCircle(x + 15.0f, y - 2.5f, 1.25f, 20);
     
 }
+void drawPlane(float x, float y) {
+    // Update timeElapsed for the animation
+    timeElapsedPlane += 0.1f; // Adjust this value for speed of animation
+
+    // Calculate the new Y position based on a sine wave
+    float oscillation = oscillationAmplitude * sin(oscillationFrequency * timeElapsedPlane);
+    float animatedY = y + oscillation;
+
+    glPushMatrix(); // Save the current transformation state
+
+    // Scale down the plane
+    glScalef(0.2f, 0.2f, 1.0f); // Scale down by 50%
+
+    glColor3f(0.0f, 0.0f, 0.5f); // Navy blue (normalized values)
+
+    // Draw the main body (rectangle)
+    glBegin(GL_QUADS);
+    glVertex2f(x, animatedY);               // Left
+    glVertex2f(x + 240.0f, animatedY);      // Right
+    glVertex2f(x + 240.0f, animatedY + 50.0f); // Top right
+    glVertex2f(x, animatedY + 50.0f);       // Top left
+    glEnd();
+
+    // Draw the nose (triangle) in light blue
+    glColor3f(0.5f, 0.7f, 1.0f); // Light blue nose
+    glBegin(GL_TRIANGLES);
+    glVertex2f(x + 240.0f, animatedY);        // Left corner of the nose
+    glVertex2f(x + 260.0f, animatedY + 25.0f); // Tip of the nose
+    glVertex2f(x + 240.0f, animatedY + 50.0f); // Top right of the body
+    glEnd();
+
+    // Draw the tail (triangle) in light blue
+    glColor3f(0.5f, 0.7f, 1.0f); // Light blue tail
+    glBegin(GL_TRIANGLES);
+    glVertex2f(x, animatedY + 50.0f);          // Top left of the body
+    glVertex2f(x - 40.0f, animatedY + 90.0f);  // Top of the tail
+    glVertex2f(x, animatedY);                  // Bottom left of the body
+    glEnd();
+
+    // Draw the left wing (light blue triangle)
+    glColor3f(0.5f, 0.7f, 1.0f); // Light blue wing
+    glBegin(GL_TRIANGLES);
+    glVertex2f(x + 80.0f, animatedY);             // Bottom of the body (center)
+    glVertex2f(x + 20.0f, animatedY - 90.0f);     // Left wing tip (below the body)
+    glVertex2f(x + 160.0f, animatedY);            // Bottom center of the body
+    glEnd();
+
+    // Reflect the left wing across y = animatedY + 25 (new wing above the plane)
+    glBegin(GL_TRIANGLES);
+    glVertex2f(x + 80.0f, animatedY + 50.0f);      // Reflection of Bottom of the body (center) across y = animatedY + 25
+    glVertex2f(x + 20.0f, animatedY + 140.0f);     // Reflection of Left wing tip across y = animatedY + 25
+    glVertex2f(x + 160.0f, animatedY + 50.0f);     // Reflection of Bottom center of the body across y = animatedY + 25
+    glEnd();
+
+    // Reflect the tail across y = animatedY + 25 (new tail below the plane)
+    glColor3f(0.5f, 0.7f, 1.0f); // Light blue tail reflection
+    glBegin(GL_TRIANGLES);
+    glVertex2f(x, animatedY + 50.0f);      // Reflection of Top left of the body
+    glVertex2f(x - 40.0f, animatedY - 40.0f);   // Reflection of Top of the tail
+    glVertex2f(x, animatedY);              // Reflection of Bottom left of the body
+    glEnd();
+
+    // Draw windows (small circles) in light blue
+    for (float i = x + 40.0f; i <= x + 200.0f; i += 60.0f) {
+        glColor3f(0.5f, 0.7f, 1.0f); // Light blue windows
+
+        glBegin(GL_POLYGON);
+        for (int j = 0; j < 100; j++) {
+            float theta = (float)j * 2.0f * 3.14159f / 100.0f;
+            glVertex2f(i + 10.0f * cos(theta), animatedY + 25.0f + 10.0f * sin(theta));
+        }
+        glEnd();
+
+        // Draw white dot inside the window
+        glPointSize(2.0f);  // Set large point size for the dot
+        glColor3f(1.0f, 1.0f, 1.0f); // White color for the dot
+        glBegin(GL_POINTS);
+        glVertex2f(i, animatedY + 25.0f);  // Draw point at the center of the window
+        glEnd();
+    }
+
+    glPopMatrix(); // Restore the previous transformation state
+}
 void drawFlyingPowerUp(float x, float y) {
 
    
         glColor3f(1.0f, 0.75f, 0.8f);
         
-        drawCircle(x, y , 15.0f, 30);
+    drawPlane(x,y);
     
 }
 void drawGround() {
     // Draw the filled rectangle (ground background)
-    glColor3f(0.3f, 0.2f, 0.1f);  // Brown color
+    glColor3f(0.1f, 0.1f, 0.2f);  // Dark Galactic Teal
     glBegin(GL_QUADS);  // Draw a rectangle with 4 vertices
     glVertex2f(0.0f, 100.0f);
     glVertex2f(windowWidth, 100.0f);
@@ -299,7 +428,7 @@ void drawGround() {
     glEnd();
 
     // Draw lines inside the ground for texture
-    glColor3f(0.5f, 0.3f, 0.2f);  // Darker brown
+    glColor3f(0.3f, 0.5f, 0.7f);  // Cosmic Blue
     glBegin(GL_LINES);
     for (float x = 0.0f; x < windowWidth; x += 40.0f) {
         glVertex2f(x, 0.0f);
@@ -315,7 +444,7 @@ void drawGround() {
     glEnd();
 
     // Add some triangles for extra pattern in the middle
-    glColor3f(0.6f, 0.4f, 0.2f);  // Slightly lighter color
+    glColor3f(0.5f, 0.7f, 0.9f);  // Lighter Cosmic Blue
     glBegin(GL_TRIANGLES);
     for (float x = 20.0f; x < windowWidth; x += 80.0f) {
         glVertex2f(x, 50.0f);
@@ -325,7 +454,7 @@ void drawGround() {
     glEnd();
 
     // Draw points in between the lines and triangles for texture
-    glColor3f(0.8f, 0.6f, 0.4f);  // Light brown
+    glColor3f(0.8f, 1.0f, 0.8f);  // Luminous Green
     glBegin(GL_POINTS);
     for (float x = 10.0f; x < windowWidth; x += 30.0f) {
         for (float y = 10.0f; y < 100.0f; y += 30.0f) {
@@ -351,7 +480,7 @@ void drawUpperFrame() {
     // Set the width for each rectangle
     float rectWidth = 700.0f / 3.0f; // Width of each rectangle
 
-    glColor3f(0.678f, 0.847f, 0.902f);  // A light sky blue
+    glColor3f(0.2f, 0.6f, 0.8f);  // A brighter sky blue for better visibility
 
     // 1. Top-left rectangle
     glBegin(GL_QUADS);
@@ -361,7 +490,7 @@ void drawUpperFrame() {
     glVertex2f(0.0f, windowHeight);
     glEnd();
     
-    glColor3f(0.0f, 0.478f, 0.651f);  // A medium teal blue
+    glColor3f(0.0f, 0.4f, 0.6f);  // A medium teal blue with less saturation
 
     // 2. Middle rectangle
     glBegin(GL_QUADS);
@@ -371,7 +500,7 @@ void drawUpperFrame() {
     glVertex2f(rectWidth, windowHeight);
     glEnd();
 
-    glColor3f(0.0f, 0.0f, 0.545f);  // A dark navy blue
+    glColor3f(0.0f, 0.0f, 0.4f);  // A darker shade for the top-right rectangle
 
     // 3. Top-right rectangle
     glBegin(GL_QUADS);
@@ -380,59 +509,131 @@ void drawUpperFrame() {
     glVertex2f(rectWidth * 3.0f, windowHeight);
     glVertex2f(rectWidth * 2.0f, windowHeight);
     glEnd();
-    
+
+
     drawStar(350, 675, 25, 10, 5);
 }
 
 
-void drawCoin(float x, float y) {
-// Draw the outer edge of the coin (golden color)
-glColor3f(1.0f, 0.84f, 0.0f); // Gold color
-drawCircle(x, y, 25.0f,25); // Outer circle
-
-// Draw the inner part of the coin (slightly darker)
-glColor3f(0.8f, 0.7f, 0.0f); // Slightly darker gold color
-drawCircle(x, y, 15.0f,15); // Inner circle
-
-// Draw the text "x2" in black
-glColor3f(0.0f, 0.0f, 0.0f); // Black color
-drawText( "x 2",x - 10, y - 10); // Position the text
-
-// Define the points for the inner square
-float squareSize = 10.0f; // Size of the inner square
-float offsetX = squareSize / 2;
-float offsetY = squareSize / 2;
 
 
-
-// Define the points for the outer square (higher above the inner square)
-float outerSquareSize = 20.0f; // Size of the outer square
-float outerOffsetX = outerSquareSize / 2;
-float outerOffsetY = outerSquareSize / 2;
-
-// Define the four points for the outer square (above each vertex)
-float outerPoints[4][2] = {
-{x - outerOffsetX, y + outerOffsetY}, // Top left (above bottom left)
-{x + outerOffsetX, y + outerOffsetY}, // Top right (above bottom right)
-{x + outerOffsetX, y - outerOffsetY}, // Bottom right (above top right)
-{x - outerOffsetX, y - outerOffsetY} // Bottom left (above top left)
-};
-
-// Draw the points above each vertex of the inner square
-glColor3f(1.0f, 0.0f, 0.0f); // Red color for points
-glPointSize(3.0f); // Set the point size to be larger
-glBegin(GL_POINTS);
-for (int i = 0; i < 4; i++) {
-glVertex2f(outerPoints[i][0], outerPoints[i][1]); // Draw each outer point
-}
-glEnd();
-//    glBegin(GL_LINES);
-//    glColor3f(0.0f, 0.0f, 1.0f); // Red color for points
+//void drawCoin(float x, float y) {
+//// Draw the outer edge of the coin (golden color)
+//glColor3f(1.0f, 0.84f, 0.0f); // Gold color
+//drawCircle(x, y, 25.0f,25); // Outer circle
 //
-//    glVertex2f(x ,y +20);
-//    glVertex2f(x+20 ,y);
-//    glEnd();
+//// Draw the inner part of the coin (slightly darker)
+//glColor3f(0.8f, 0.7f, 0.0f); // Slightly darker gold color
+//drawCircle(x, y, 15.0f,15); // Inner circle
+//
+//// Draw the text "x2" in black
+//glColor3f(0.0f, 0.0f, 0.0f); // Black color
+//drawText( "x 2",x - 10, y - 10); // Position the text
+//
+//// Define the points for the inner square
+//float squareSize = 10.0f; // Size of the inner square
+//float offsetX = squareSize / 2;
+//float offsetY = squareSize / 2;
+//
+//
+//
+//// Define the points for the outer square (higher above the inner square)
+//float outerSquareSize = 20.0f; // Size of the outer square
+//float outerOffsetX = outerSquareSize / 2;
+//float outerOffsetY = outerSquareSize / 2;
+//
+//// Define the four points for the outer square (above each vertex)
+//float outerPoints[4][2] = {
+//{x - outerOffsetX-2, y + outerOffsetY}, // Top left (above bottom left)
+//{x + outerOffsetX-2, y + outerOffsetY}, // Top right (above bottom right)
+//{x + outerOffsetX-2, y - outerOffsetY-2}, // Bottom right (above top right)
+//{x - outerOffsetX-2, y - outerOffsetY-2} // Bottom left (above top left)
+//};
+//
+//// Draw the points above each vertex of the inner square
+//glColor3f(1.0f, 0.0f, 0.0f); // Red color for points
+//glPointSize(3.0f); // Set the point size to be larger
+//glBegin(GL_POINTS);
+//for (int i = 0; i < 4; i++) {
+//glVertex2f(outerPoints[i][0], outerPoints[i][1]); // Draw each outer point
+//}
+//glEnd();
+////    glBegin(GL_LINES);
+////    glColor3f(0.0f, 0.0f, 1.0f); // Red color for points
+////
+////    glVertex2f(x ,y +20);
+////    glVertex2f(x+20 ,y);
+////    glEnd();
+//}
+void drawCoin(float x, float y) {
+    // Save the current matrix state
+    glPushMatrix();
+    
+    // Move to the coin's position
+    glTranslatef(x, y, 0);
+    
+    // Rotate the coin around the Y-axis
+    glRotatef(coinAngle, 0.0f, 0.0f, 1.0f);
+    
+    // Draw the outer edge of the coin (golden color)
+    glColor3f(1.0f, 0.84f, 0.0f); // Gold color
+    drawCircle(0.0f, 0.0f, 25.0f, 25); // Outer circle (at origin)
+
+    // Draw the inner part of the coin (slightly darker)
+    glColor3f(0.8f, 0.7f, 0.0f); // Slightly darker gold color
+    drawCircle(0.0f, 0.0f, 15.0f, 15); // Inner circle (at origin)
+
+    // Draw the dividing lines
+    glColor3f(0.0f, 0.0f, 0.0f); // Black color for the lines
+    glBegin(GL_LINES);
+    // Vertical line
+    glVertex2f(0.0f, -15.0f);  // Start at the bottom of the inner circle
+    glVertex2f(0.0f, 15.0f);   // End at the top of the inner circle
+
+    // Horizontal line
+    glVertex2f(-15.0f, 0.0f);  // Start at the left of the inner circle
+    glVertex2f(15.0f, 0.0f);   // End at the right of the inner circle
+    glEnd();
+
+    // Restore the previous matrix state to keep the text fixed
+    glPopMatrix();
+
+    // Draw the text "x2" in black at a fixed position
+    glColor3f(0.0f, 0.0f, 0.0f); // Black color
+    drawText("x 2", x - 10, y - 10); // Position the text relative to the coin
+     
+    // Define the points for the inner square
+    float squareSize = 10.0f; // Size of the inner square
+    float offsetX = squareSize / 2;
+    float offsetY = squareSize / 2;
+
+    // Define the points for the outer square (higher above the inner square)
+    float outerSquareSize = 20.0f; // Size of the outer square
+    float outerOffsetX = outerSquareSize / 2;
+    float outerOffsetY = outerSquareSize / 2;
+
+    // Define the four points for the outer square
+    float outerPoints[4][2] = {
+        {x - outerOffsetX - 2, y + outerOffsetY}, // Top left
+        {x + outerOffsetX - 2, y + outerOffsetY}, // Top right
+        {x + outerOffsetX - 2, y - outerOffsetY - 2}, // Bottom right
+        {x - outerOffsetX - 2, y - outerOffsetY - 2} // Bottom left
+    };
+
+    // Draw the points above each vertex of the inner square
+    glColor3f(1.0f, 0.0f, 0.0f); // Red color for points
+    glPointSize(3.0f); // Set the point size to be larger
+    glBegin(GL_POINTS);
+    for (int i = 0; i < 4; i++) {
+        glVertex2f(outerPoints[i][0], outerPoints[i][1]); // Draw each outer point
+    }
+    glEnd();
 }
+
+
+
+
+
 
 //-------------------------------- DRAWING HELPERS -----------------------------------
 
@@ -573,7 +774,8 @@ void updateObstacles(int value) {
         generateObstacle();
         obstacleTimer = 0.0f;
     }
-    collectibleRotationAngle += 0.5f;  // Adjust this value for slower or faster rotation
+    collectibleRotationAngle += 0.5f; 
+    coinAngle += 1.0f;// Adjust this value for slower or faster rotation
        if (collectibleRotationAngle >= 360.0f) {
            collectibleRotationAngle -= 360.0f;  // Keep the angle within 0-360 degrees
        }
@@ -742,9 +944,10 @@ void initStars(int numStars) {
         Star star;
         star.x = rand() % windowWidth; // Random x position
         // Set y position to be within the range of 400 to 500
-        star.y = rand() % 101 + 450; // Random y position from 400 to 500 (inclusive)
+        star.y = rand() % 201 + 450; // Random y position from 400 to 500 (inclusive)
         star.size = rand() % 3 + 2; // Random size between 2 and 5
-        star.brightness = static_cast<float>(rand() % 100) / 100.0f; // Random brightness
+        star.brightness = static_cast<float>(rand() % 50 + 50) / 100.0f; // Random brightness between 0.5 and 1.0
+
         star.speed = static_cast<float>(rand() % 20 + 10) / 1000.0f; // Random speed for brightness change
         stars.push_back(star);
     }
@@ -788,7 +991,7 @@ void display() {
     }
     else {
        
-           glClearColor(1.0, 1.0, 1.0, 1.0f); // Set the background color
+           glClearColor(0.0, 0.0, 0.0, 1.0f); // Set the background color
     
 
         drawUpperFrame();  // Add the upper frame
@@ -808,7 +1011,7 @@ void display() {
             drawCoin(coin.x,coin.y);
         }
         for (const auto& flying : flyingPowerUp) {
-            drawFlyingPowerUp(flying.x,flying.y);
+            drawFlyingPowerUp(flying.x*5,flying.y*5);
         }
         drawGround();
 
@@ -868,21 +1071,23 @@ int main(int argc, char** argv) {
     glutInitWindowSize(windowWidth, windowHeight);
     glutInitWindowPosition(150, 150);
     glutCreateWindow("UFO ALIEN GAME");
-
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     gluOrtho2D(0.0, windowWidth, 0.0, windowHeight);
-    initStars(50); // Initialize 100 stars
+    initStars(80); // Initialize 100 stars
     glutDisplayFunc(display);
     glutTimerFunc(0, updateCharacter, 0);
     glutTimerFunc(16, updateObstacles, 0);
     glutTimerFunc(0, timer, 0);
-     glutKeyboardFunc(keyPress);
-     glutKeyboardUpFunc(keyUp);
+    glutKeyboardFunc(keyPress);
+    glutKeyboardUpFunc(keyUp);
     glutSpecialFunc(specialKeyPress); // Special key input
-       glutSpecialUpFunc(specialKeyUp);   // Special key release input
+    glutSpecialUpFunc(specialKeyUp);   // Special key release input
     glutMainLoop();
 
     return 0;
 }
+
+
+
 
 
