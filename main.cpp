@@ -112,9 +112,7 @@ void drawRocket(float x, float y) {
 void drawStarCollectible(float x, float y, float size) {
     glPushMatrix();  // Save the current matrix state
     glTranslatef(x, y, 0.0f);
-        
-        // Rotate around the Z-axis
-        glRotatef(collectibleRotationAngle, 0.0f, 0.0f, 1.0f);
+glRotatef(collectibleRotationAngle, 0.0f, 0.0f, 1.0f);
         
         // Move back to the origin to draw the star
         glTranslatef(-x, -y, 0.0f);
@@ -122,13 +120,6 @@ void drawStarCollectible(float x, float y, float size) {
     glBegin(GL_POLYGON); // Start drawing the star shape
     glColor3f(0.0f, 1.0f, 1.0f); // Star color: cyan
     
-//    for (int i = 0; i < 6; i++) {
-//        float angle = i * 2.0f * M_PI / 6; // Calculate angle for each vertex
-//        float vertexX = x + size * cos(angle); // X coordinate
-//        float vertexY = y + size * sin(angle); // Y coordinate
-//        glVertex2f(vertexX, vertexY); // Define the vertex
-//    }
-     
         glVertex2f(x-size/2, y); // Define the vertex
     glVertex2f(x+size/2, y); // Define the vertex
     glVertex2f(x+size/2, y+size);
@@ -156,7 +147,6 @@ void drawStarCollectible(float x, float y, float size) {
     glEnd();
     glPopMatrix();  // Restore the previous matrix state
 
-    // Print the coordinates of the collectible
    
 }
 void drawDiamond(float x, float y, float size, float brightness) {
@@ -426,7 +416,7 @@ void generateObstacle() {
 void updateObstacles(int value) {
     updateStars();
     obstacleTimer += 0.02f;
-    
+    speedMultiplier+=0.0001;
     // Generate a new obstacle every 2 seconds
     if (obstacleTimer >= 2.0f) {
         generateObstacle();
@@ -438,7 +428,7 @@ void updateObstacles(int value) {
        }
     // Move obstacles to the left
     for (int i = 0; i < obstacles.size(); ++i) {
-        obstacles[i].x -= obstacleSpeed; // Move obstacle
+        obstacles[i].x -= (obstacleSpeed+speedMultiplier); // Move obstacle
 
         // Check if an obstacle is off the screen
         if (obstacles[i].x < -30.0f) {
@@ -465,7 +455,7 @@ void updateObstacles(int value) {
 
     // Move collectibles to the left
     for (int i = 0; i < collecibles.size(); ++i) {
-        collecibles[i].x -= obstacleSpeed; // Move collectible to the left
+        collecibles[i].x -= (obstacleSpeed+speedMultiplier); // Move collectible to the left
         
         // Check if a collectible is off the screen
         if (collecibles[i].x < -30.0f) {
@@ -645,9 +635,9 @@ void display() {
         drawText(scoreText, windowWidth - 200.0f, windowHeight - 70.0f);
         drawText(timeString, windowWidth - 200.0f, windowHeight - 90.0f);
 
-        // Check if 5 minutes have passed
+      // 5 minutes is the game time
         if (elapsedTime >= 300.0f) {
-            gameEnded = true; // Set game end flag to true
+            gameEnded = true;
         }
     }
 
