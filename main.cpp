@@ -1,10 +1,10 @@
-////
 #define GL_SILENCE_DEPRECATION
 #include <GLUT/glut.h>
 #include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <ctime>
 
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 int windowWidth = 700;
@@ -46,7 +46,8 @@ float obstacleTimer = 0.0f;
 float obstacleSpeed = 4.0f;
 //-------------------------------- OBSTACLES RELATED -----------------------------------
 //-------------------------------- POWER-UPS RELATED -----------------------------------
-//float powerUp = 0.0f;
+int timerPowerUpDisplay=0;
+
 float coinAngle = 0.0f;
 struct powerUpCoin {
     float x;
@@ -64,6 +65,10 @@ std::vector<powerUpFly> flyingPowerUp; // data structure to hold of the all tha 
 float timeElapsedPlane = 0.0f; // Time or frame counter
 const float oscillationAmplitude = 5.0f; // Amplitude of the oscillation
 const float oscillationFrequency = 2.0f;
+std::chrono::time_point<std::chrono::steady_clock> powerUpStartTime;
+bool powerUpActive = false;
+std::chrono::time_point<std::chrono::steady_clock> powerUpStartTime2;
+bool powerUpActive2 = false;
 //-------------------------------- POWER-UPS RELATED -----------------------------------
 
 //-------------------------------- COLLECTIBLES RELATED -----------------------------------
@@ -117,7 +122,7 @@ void drawRocket(float x, float y) {
     glEnd();
 
     // Rocket fins
-    glColor3f(0.0f, 0.7f, 0.6f);  // Lighter Galactic Teal for the fins
+    glColor3f(1.0f, 1.0f, 1.0f);  // Lighter Galactic Teal for the fins
     glBegin(GL_TRIANGLES);  // Left fin
         glVertex2f(x - 5, y + 15); // Bottom-left of fin
         glVertex2f(x - 10, y);      // Bottom-left corner
@@ -261,8 +266,7 @@ void drawCharacter() {
         glColor3f(0.3f, 0.8f, 0.3f);
         drawCircle(characterX,characterY-duckingDistance, 30.0f, 50);
         glColor3f(1.0f, 0.4f, 0.5f);
-   
-            drawTriangle(characterX-15, characterY+25-duckingDistance, characterX+15,characterY+25-duckingDistance, characterX, characterY+60-duckingDistance);
+        drawTriangle(characterX-15, characterY+25-duckingDistance,characterX+15,characterY+25-duckingDistance, characterX, characterY+60-duckingDistance);
     
         glColor3f(1.0f, 1.0f, 1.0f);
  
@@ -276,10 +280,10 @@ void drawCharacter() {
         glColor3f(1.0f, 0.8f, 0.3f);
     
             glBegin(GL_LINES);
-            glVertex2f(characterX-20, characterY-10-duckingDistance); glVertex2f(characterX-50, characterY-150);
-            glVertex2f(characterX-10, characterY-10-duckingDistance); glVertex2f(characterX-20, characterY-150);
-            glVertex2f(characterX, characterY-10-duckingDistance); glVertex2f(characterX+10, characterY-150);
-            glVertex2f(characterX+10, characterY-10-duckingDistance); glVertex2f(characterX+40, characterY-150);
+            glVertex2f(characterX-20, characterY-10-duckingDistance-16); glVertex2f(characterX-50, characterY-150);
+            glVertex2f(characterX-10, characterY-10-duckingDistance-16); glVertex2f(characterX-20, characterY-150);
+            glVertex2f(characterX, characterY-10-duckingDistance-16); glVertex2f(characterX+10, characterY-150);
+            glVertex2f(characterX+10, characterY-10-duckingDistance-16); glVertex2f(characterX+40, characterY-150);
             glEnd();
             glColor3f(1.0f, 0.0f, 1.0f);
             glPointSize(5.0f);
@@ -732,43 +736,80 @@ void generateObstacle() {
     } else {
         obstacle.y = 270;
     }
-    
     obstacles.push_back(obstacle);
-    
-    int randomItem = rand() % 4; // Generates 0, 1, or 2
-    
-    if (randomItem == 0) { // Generate a collectible
-        Collectible collectible;
-        collectible.x = windowWidth; // Start from the right side of the screen
-        collectible.height = 20; // Set a fixed height for collectibles
-        // Set the collectible's Y position based on obstacle's Y position
-        collectible.y = (obstacle.y == 120) ? 350 : 140;
-        collecibles.push_back(collectible);
-    } else if (randomItem == 1) { // Generate a power-up
+    timerPowerUpDisplay++;
+    if (timerPowerUpDisplay==2 || timerPowerUpDisplay==22)
+    {
         powerUpCoin p;
-        p.x = windowWidth; // Start from the right side of the screen
+               p.x = windowWidth; // Start from the right side of the screen
+       
+               p.y = (obstacle.y == 120) ? 400 : 190;
+               coins.push_back(p);
         
-        p.y = (obstacle.y == 120) ? 400 : 190;
-        coins.push_back(p);
     }
-    else if (randomItem==2)
+    else if (timerPowerUpDisplay== 10 || timerPowerUpDisplay== 31)
     {
         powerUpFly pf;
-        pf.x = windowWidth; // Start from the right side of the screen
-        
-        pf.y = (obstacle.y == 120) ? 400 : 190;
-        flyingPowerUp.push_back(pf);
+               pf.x = windowWidth; // Start from the right side of the screen
+       
+               pf.y = (obstacle.y == 120) ? 400 : 190;
+                 flyingPowerUp.push_back(pf);
     }
+  
     else
     {
-      //  printf("NOTHING IS ABOVE OR BWLOE OBSTACLE");
+        int randomItem = rand() % 2; // Generates 0, 1, or 2
+        
+        if (randomItem == 0) { // Generate a collectible
+            Collectible collectible;
+            collectible.x = windowWidth; // Start from the right side of the screen
+            collectible.height = 20; // Set a fixed height for collectibles
+            // Set the collectible's Y position based on obstacle's Y position
+            collectible.y = (obstacle.y == 120) ? 350 : 140;
+            collecibles.push_back(collectible);
+        }
+       
+        else
+        {
+        }
     }
 }
 
 void updateObstacles(int value) {
+    if (powerUpActive) {
+            auto currentTime = std::chrono::steady_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime).count();
+
+            if (duration >= 10) {
+                scoreAdditionFactor = 1; // Reset the score factor after 20 seconds
+                powerUpActive = false; 
+                time_t now = time(0);               // Get the current time in seconds
+                  tm *ltm = localtime(&now);          // Convert it to local time format
+
+                 
+                printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
+                       ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+            }
+        }
+    if (powerUpActive2) {
+            auto currentTime = std::chrono::steady_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime2).count();
+
+            if (duration >= 10) {
+                isFlying=false;
+                characterY = fixedcharacterY;
+                powerUpActive2 = false;
+                time_t now = time(0);               // Get the current time in seconds
+                  tm *ltm = localtime(&now);          // Convert it to local time format
+
+                  // Print the message with the current time
+                  printf("I JUST RESET FLYING POWERUP at %02d:%02d:%02d\n",
+                         ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+            }
+        }
     updateStars();
     obstacleTimer += 0.02f;
-    speedMultiplier+=0.0001;
+    speedMultiplier+=0.001;
     // Generate a new obstacle every 2 seconds
     if (obstacleTimer >= 2.0f) {
         generateObstacle();
@@ -833,6 +874,14 @@ void updateObstacles(int value) {
         }
         if (checkCollisionCoin(coins[i].x,coins[i].y)) {
             scoreAdditionFactor=2;
+            powerUpStartTime = std::chrono::steady_clock::now(); // Start timer
+            powerUpActive = true;
+            time_t now = time(0);               // Get the current time in seconds
+              tm *ltm = localtime(&now);          // Convert it to local time format
+
+              // Print the message with the current time
+              printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
+                     ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
             coins.erase(coins.begin() + i);
             --i;
         }
@@ -849,6 +898,14 @@ void updateObstacles(int value) {
         if (checkCollisionFlying(flyingPowerUp[i].x, flyingPowerUp[i].y)) {
            // printf("I TOOK A FLYING POWER UP");
             isFlying=true;
+            powerUpStartTime2 = std::chrono::steady_clock::now(); // Start timer
+            powerUpActive2 = true;
+            time_t now = time(0);               // Get the current time in seconds
+              tm *ltm = localtime(&now);          // Convert it to local time format
+
+              // Print the message with the current time
+              printf("I JUST ACTIVATED FLYING POWERUP at %02d:%02d:%02d\n",
+                     ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
             flyingPowerUp.erase(flyingPowerUp.begin() + i);
             --i;
         }
@@ -924,10 +981,11 @@ void updateCharacter(int value) {
     
 
     }
+    
     if (isFlying)
     {
-        characterY = windowHeight - 50.0f;
-
+        characterY = windowHeight - 105.0f;
+        
     }
 
     glutPostRedisplay(); // Request a redraw
@@ -973,7 +1031,7 @@ void display() {
            char endMessage[50];
            sprintf(endMessage, "YOUU LOST:((");
            
-           glColor3f(0.0f, 0.0f, 0.0f); // Set text color to white
+           glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
 
            drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
            
@@ -984,7 +1042,7 @@ void display() {
                char endMessage[50];
                sprintf(endMessage, "Game End! Score: %d", score);
                
-               glColor3f(0.0f, 0.0f, 0.0f); // Set text color to white
+               glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
 
                drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2); // Center the message
            }
