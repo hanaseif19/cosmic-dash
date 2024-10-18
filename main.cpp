@@ -13,6 +13,15 @@ int windowHeight = 700;
 int score = 0;
 // health
 int health = 5;
+struct Star {
+    float x;        // Horizontal position
+    float y;        // Vertical position
+    float size;     // Size of the star
+    float brightness; // Brightness of the star
+    float speed;    // Speed of brightness change
+};
+std::vector<Star> stars; // Vector to hold all stars
+
 // for obstacles movement
 float speedMultiplier=0;
 float speedMultiplier2=0;
@@ -88,6 +97,17 @@ bool checkCollisionCollectible(float collectibleX,float collectibleY, float coll
     return isColliding;
 
 }
+void updateStars() {
+    for (auto &star : stars) {
+        star.brightness += star.speed; // Update brightness
+
+        // Reverse speed if brightness goes out of bounds
+        if (star.brightness > 1.0f || star.brightness < 0.0f) {
+            star.speed = -star.speed;
+            star.brightness = std::clamp(star.brightness, 0.0f, 1.0f); // Keep within bounds
+        }
+    }
+}
 // generate obstacles randomly either at a level of the character's head or on the ground
 void generateObstacle() {
     Obstacle obstacle;
@@ -116,6 +136,7 @@ void generateObstacle() {
 
 
 void updateObstacles(int value) {
+    updateStars();
     obstacleTimer += 0.02f;
     
     // Generate a new obstacle every 2 seconds
@@ -488,6 +509,31 @@ void drawUpperFrame() {
     drawStar(350, 675, 25,10, 5);
 
 }
+void initStars(int numStars) {
+    srand(static_cast<unsigned>(time(0))); // Seed for random number generation
+    for (int i = 0; i < numStars; i++) {
+        Star star;
+        star.x = rand() % windowWidth; // Random x position
+        // Random y position in the top half excluding the top 50
+        star.y = rand() % (windowHeight / 2 - 50) + (windowHeight / 2 + 50);
+        star.size = rand() % 3 + 2; // Random size between 2 and 5
+        star.brightness = static_cast<float>(rand() % 100) / 100.0f; // Random brightness
+        star.speed = static_cast<float>(rand() % 20 + 10) / 1000.0f; // Random speed for brightness change
+        stars.push_back(star);
+    }
+}
+
+void drawDiamond(float x, float y, float size, float brightness) {
+    glColor3f(brightness, brightness, brightness); // Set color based on brightness
+    glBegin(GL_QUADS);
+        glVertex2f(x, y + size);     // Top vertex
+        glVertex2f(x + size, y);     // Right vertex
+        glVertex2f(x, y - size);     // Bottom vertex
+        glVertex2f(x - size, y);     // Left vertex
+    glEnd();
+}
+
+
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -514,29 +560,25 @@ void display() {
            }
     }
     else {
-        // Background Color Setup
-        float baseR = 0.2f; // Darker red
-        float baseG = 0.2f; // Darker green
-        float baseB = 0.4f; // Darker blue (to give a night sky feel)
-
-        float pastelFactor = 0.5f; // Controls how pastel the colors are
-        float r = pastelFactor * ((sin(timeforBackgroundColor) + 1.0f) / 2.0f) + (1.0f - pastelFactor) * baseR; // Blend with darker base
-        float g = pastelFactor * ((cos(timeforBackgroundColor) + 1.0f) / 2.0f) + (1.0f - pastelFactor) * baseG; // Blend with darker base
-        float b = pastelFactor * ((sin(timeforBackgroundColor + 3.14f) + 1.0f) / 2.0f) + (1.0f - pastelFactor) * baseB; // Blend with darker base
-
-        // Draw Background
-        glBegin(GL_QUADS);
-        glColor3f(r, g, b); // Set color based on time
-        glVertex2f(0, 0); // Bottom left
-        glVertex2f(windowWidth, 0);  // Bottom right
-        glVertex2f(windowWidth, windowHeight);   // Top right
-        glVertex2f(0, windowHeight);  // Top left
-        glEnd();
+       
+           glClearColor(1.0, 1.0, 1.0, 1.0f); // Set the background color
+        
+//        // Draw Background
+//        glBegin(GL_QUADS);
+//        glColor3f(, g, b); // Set color based on time
+//        glVertex2f(0, 0); // Bottom left
+//        glVertex2f(windowWidth, 0);  // Bottom right
+//        glVertex2f(windowWidth, windowHeight);   // Top right
+//        glVertex2f(0, windowHeight);  // Top left
+//        glEnd();
 
         drawUpperFrame();  // Add the upper frame
         drawHealth();
         drawCharacter();
 
+        for (const auto &star : stars) {
+                drawDiamond(star.x, star.y, star.size, star.brightness);
+            }
         for (const auto& obstacle : obstacles) {
             drawObstacle(obstacle.x, obstacle.y, obstacle.height);
         }
@@ -605,7 +647,7 @@ int main(int argc, char** argv) {
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     gluOrtho2D(0.0, windowWidth, 0.0, windowHeight);
-
+    initStars(80); // Initialize 100 stars
     glutDisplayFunc(display);
     glutTimerFunc(0, updateCharacter, 0);
     glutTimerFunc(16, updateObstacles, 0);
