@@ -222,21 +222,6 @@ void drawHealth() {
         }
 }
 void updateCharacter(int value) {
-//    if (isJumping) {
-//        if (characterY < maxjumpHeight) {
-//            characterY += jumpSpeed;}
-////        } else {
-////            isJumping = false;
-////        }
-//    } else {
-//        if (characterY > 250.0f) {
-//            characterY -= gravity;
-//        }
-//        if (isDucking) {
-//               characterY = 200.0f;  // Lower the character to simulate ducking
-//           } else {
-//               characterY = 250.0f;  // Restore to normal height when not ducking
-//           }
     if (isJumping) {
         if (characterY < maxjumpHeight) {
             characterY += jumpSpeed;
@@ -399,38 +384,9 @@ void drawUFO(float x, float y) {
     drawCircle(x + 15.0f, y - 2.5f, 2.5f, 20);
 }
 
-//void updateUFO(int value) {
-//  
-//    ufoX1 += (speedMultiplier+ufoXChange);
-//    ufoX2 += (speedMultiplier2+ufoXChange);
-//
-////    std::cout << "The value is: " << ufoX1 << std::endl;
-//    speedMultiplier-=0.001;
-//    speedMultiplier2-=0.0001;
-//    std::cout << "The value is: " << speedMultiplier << std::endl;
-//
-//   
-//    if (ufoX1 <= -50.0f) {
-//        ufoX1 = windowWidth + 50.0f;  // Reset position to the right side
-//    }
-//
-//    
-//     if (ufoX2 <= -50.0f) {
-//         ufoX2 = windowWidth + 100.0f;  // Reset position to the right side
-//     }
-//
-//
-//    glutTimerFunc(16, updateUFO, 0);  // Schedule next update (~60 FPS)
-//    glutPostRedisplay();  // Redraw the screen
-//}
+
 void drawObstacle(float x, float y, float height) {
-//    glColor3f(0.8f, 0.0f, 0.0f);  // Red color for obstacle
-//    glBegin(GL_QUADS);
-//        glVertex2f(x, y);                 // Bottom-left
-//        glVertex2f(x + 30.0f, y);         // Bottom-right
-//        glVertex2f(x + 30.0f, y + height); // Top-right
-//        glVertex2f(x, y + height);        // Top-left
-//    glEnd();
+
    
         glColor3f(0.7f, 0.7f, 0.0f);
         drawEllipse(x, y, 25.0f, 15.0f, 50);
