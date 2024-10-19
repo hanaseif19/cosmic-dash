@@ -47,7 +47,7 @@ float obstacleSpeed = 4.0f;
 //-------------------------------- OBSTACLES RELATED -----------------------------------
 //-------------------------------- POWER-UPS RELATED -----------------------------------
 int timerPowerUpDisplay=0;
-
+char* powerUpMessage = nullptr;
 float coinAngle = 0.0f;
 struct powerUpCoin {
     float x;
@@ -148,7 +148,7 @@ glRotatef(collectibleRotationAngle, 0.0f, 0.0f, 1.0f);
     glBegin(GL_POLYGON); // Start drawing the star shape
     glColor3f(0.0f, 1.0f, 1.0f); // Star color: cyan
     
-        glVertex2f(x-size/2, y); // Define the vertex
+    glVertex2f(x-size/2, y); // Define the vertex
     glVertex2f(x+size/2, y); // Define the vertex
     glVertex2f(x+size/2, y+size);
     glVertex2f(x-size/2, y+size);
@@ -304,10 +304,13 @@ void drawCharacter() {
 
 void drawText(const char* text, float x, float y) {
     glRasterPos2f(x, y);
-    for (const char* c = text; *c != '\0'; ++c) {
-        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+    if (text != nullptr) {
+        for (const char* c = text; *c != '\0'; ++c) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        }
     }
 }
+
 
 void drawHealth() {
    
@@ -545,16 +548,12 @@ void drawCoin(float x, float y) {
     glColor3f(0.8f, 0.7f, 0.0f); // Slightly darker gold color
     drawCircle(0.0f, 0.0f, 15.0f, 15); // Inner circle (at origin)
 
-    // Draw the dividing lines
-    glColor3f(0.0f, 0.0f, 0.0f); // Black color for the lines
-    glBegin(GL_LINES);
-    // Vertical line
-    glVertex2f(0.0f, -15.0f);  // Start at the bottom of the inner circle
-    glVertex2f(0.0f, 15.0f);   // End at the top of the inner circle
-
-    // Horizontal line
-    glVertex2f(-15.0f, 0.0f);  // Start at the left of the inner circle
-    glVertex2f(15.0f, 0.0f);   // End at the right of the inner circle
+    // Draw the lighting effect (white triangle) in the upper left corner
+    glColor3f(1.0f, 1.0f, 1.0f); // White color for the lighting effect
+    glBegin(GL_TRIANGLES);
+    glVertex2f(-15.0f, 10.0f);  // Top left
+    glVertex2f(-5.0f, 10.0f);   // Top right
+    glVertex2f(-15.0f, 5.0f);    // Bottom left
     glEnd();
 
     // Restore the previous matrix state
@@ -583,7 +582,7 @@ void drawCoin(float x, float y) {
     };
 
     // Draw the points above each vertex of the inner square
-    glColor3f(1.0f, 0.0f, 0.0f); // Red color for points
+    glColor3f(0.8f, 0.52f, 0.25f); // Light brown color for points
     glPointSize(3.0f); // Set the point size to be larger
     glBegin(GL_POINTS);
     for (int i = 0; i < 4; i++) {
@@ -591,6 +590,7 @@ void drawCoin(float x, float y) {
     }
     glEnd();
 }
+
 
 
 
@@ -734,10 +734,29 @@ void generateObstacle() {
     }
 }
 
+
 void updateObstacles(int value) {
+   
+
     if (powerUpActive) {
-            auto currentTime = std::chrono::steady_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime).count();
+        // Calculate current time and duration
+        auto currentTime = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime).count();
+        int remainingTime = 10 - duration; // 10 seconds for power-up duration
+
+        if (remainingTime > 0) {
+            const char* baseMessage = "Double Score Active:  ";
+            
+            // Calculate total length needed for the new message
+            int messageLength = strlen(baseMessage) + 20; // +20 for the remaining time part
+            powerUpMessage = new char[messageLength]; // Allocate memory for the combined message
+
+            // Format the message with the remaining time
+            sprintf(powerUpMessage, "%s%d seconds remaining", baseMessage, remainingTime);
+        } else {
+            delete[] powerUpMessage; // Free the previously allocated memory
+            powerUpMessage = nullptr; // Clear the pointer if no power-ups are active
+        }
 
             if (duration >= 10) {
                 scoreAdditionFactor = 1; // Reset the score factor after 20 seconds
@@ -753,7 +772,21 @@ void updateObstacles(int value) {
     if (powerUpActive2) {
             auto currentTime = std::chrono::steady_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime2).count();
+        int remainingTime = 10 - duration; // 10 seconds for power-up2 duration
 
+        if (remainingTime > 0) {
+            const char* baseMessage = "Flying Active:  ";
+            
+            // Calculate total length needed for the new message
+            int messageLength = strlen(baseMessage) + 20; // +20 for the remaining time part
+            powerUpMessage = new char[messageLength]; // Allocate memory for the combined message
+
+            // Format the message with the remaining time
+            sprintf(powerUpMessage, "%s%d seconds remaining", baseMessage, remainingTime);
+        } else {
+            delete[] powerUpMessage; // Free the previously allocated memory
+            powerUpMessage = nullptr; // Clear the pointer if no power-ups are active
+        }
             if (duration >= 10) {
                 isFlying=false;
                 characterY = fixedcharacterY;
@@ -792,19 +825,24 @@ void updateObstacles(int value) {
         
         // Check collision with character
         if (checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
-            health--;
-            // howa 5abat hena
-           
-            
-            if (health <= 0) {
-                gameEnded = true;
-                // Stop updating the game
-                return;
-            }
-            obstacles.erase(obstacles.begin() + i);
-            --i;
+                    health--;
+                    // howa 5abat hena
+                   
+                    
+                    if (health <= 0) {
+                        gameEnded = true;
+                        // Stop updating the game
+                        return;
+                    }
+                    obstacles.erase(obstacles.begin() + i);
+                    --i;
+                }
+            // No need to erase the obstacle, just handle the recoil
+            // obstacles.erase(obstacles.begin() + i); // Remove this line
+            // --i; // Remove this line as well
         }
-    }
+        
+
 
     // Move collectibles to the left
     for (int i = 0; i < collecibles.size(); ++i) {
@@ -873,6 +911,7 @@ void updateObstacles(int value) {
     
     // Call this function again after 16 ms (~60 FPS)
     glutTimerFunc(16, updateObstacles, 0);
+
 }
 
 //----------------------------- OBSTACLE GENERATION AND UPDATE ----------------------------
@@ -1003,7 +1042,8 @@ void display() {
                
                glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
 
-               drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2); // Center the message
+               drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
+               
            }
     }
     else {
@@ -1047,9 +1087,10 @@ void display() {
         glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
         drawText(scoreText, windowWidth - 200.0f, windowHeight - 20.0f);
         drawText(timeString, windowWidth - 200.0f, windowHeight - 40.0f);
+        drawText(powerUpMessage, windowWidth - 400.0f, windowHeight - 70.0f);
 
       // 5 minutes is the game time
-        if (elapsedTime >= 300.0f) {
+        if (elapsedTime >= 60.0f) {
             gameEnded = true;
         }
     }
