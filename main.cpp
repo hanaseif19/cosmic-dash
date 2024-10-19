@@ -5,7 +5,9 @@
 #include <iostream>
 #include <vector>
 #include <ctime>
-
+//#include <SDL.H>
+//#include <SDL_mixer.h>
+//CHaracter coordinates top 290.000000, bottom 347.106018 ,right 140.000000 , left 50.000000collectible coordinates top 535.000000, bottom 505.000000 ,right 561.190002 , left 531.19000
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 int windowWidth = 700;
 int windowHeight = 700;
@@ -27,7 +29,7 @@ float maxjumpHeight = 400.0f; // the maximum height to which he can jump to le f
 float gravity=3.0f; // kol mara benazel men el distance ad eh w howa beyenzel men el jump
 float jumpSpeed=50.0f; // 3aks el gravity bas el fo2
 bool isDucking = false; // tracks whether he's ducking or not according to lower arrow key press
-float duckingDistance=0; // distnce he ducks down
+float duckingDistance=0; // distance he ducks down
 bool isFlying=false;
 int scoreAdditionFactor=1;
 //-------------------------------- CHARACTER RELATED -----------------------------------
@@ -90,7 +92,7 @@ struct Collectible {
     float height;
 };
 std::vector<Collectible> collecibles;
-//-------------------------------- COLLECTIBLES RELATED -----------------------------------
+//----------------------------- COLLECTIBLES RELATED-----------------------------------
 
 //-------------------------------- CODE LOGIC -----------------------------------
 
@@ -262,6 +264,15 @@ void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
 //}
 void drawCharacter() {
 
+    glPushMatrix();
+    if (isFlying) {
+          
+        glTranslatef(0,characterY+60+125, 0.0f);
+        glScalef(1.0f, -1.0f, 1.0f);
+        glTranslatef(0, -(characterY+60), 0.0f);
+//        glTranslatef(0, (characterY+60), 0.0f);
+
+        }
     // Body color (dark blue/purple for space theme)
     glColor3f(0.2f, 0.2f, 0.6f);  // Dark blue body
     drawCircle(characterX, characterY - duckingDistance, 30.0f, 50);
@@ -300,6 +311,7 @@ void drawCharacter() {
     glVertex2f(characterX + 10, characterY - 148);
     glVertex2f(characterX + 40, characterY - 148);
     glEnd();
+    glPopMatrix();
 }
 
 
@@ -607,8 +619,17 @@ void drawCoin(float x, float y) {
 bool checkCollision(float obstacleX,float obstacleY, float obstacleHeight) {
     float characterLeft=characterX-50;
     float characterRight=characterX+40;
-    float characterBottom=characterY-148;
-    float CharacterTop= characterY+60-duckingDistance;
+    float characterBottom;
+    float CharacterTop;
+    if (!isFlying)
+    {
+        characterBottom=characterY-148;
+        CharacterTop= characterY+60-duckingDistance;
+    }
+    else{
+        float characterBottom=characterY-60;
+        float CharacterTop= 650;
+    }
     float obstacleRight= obstacleX+25;
     float obstacleTop=obstacleY+20;
     float obstacleBottom=obstacleY-15;
@@ -623,8 +644,23 @@ bool checkCollision(float obstacleX,float obstacleY, float obstacleHeight) {
 bool checkCollisionCollectible(float collectibleX,float collectibleY, float collectibleSize) {
     float characterLeft=characterX-50;
     float characterRight=characterX+40;
-    float characterBottom=characterY-148;
-    float CharacterTop= characterY+60-duckingDistance;
+    float characterBottom;
+    float CharacterTop;
+    if (!isFlying)
+    {
+        characterBottom=characterY-148;
+        CharacterTop= characterY+60-duckingDistance;
+       
+    }
+    
+    else{
+        characterBottom=650-210;
+         CharacterTop= 650;
+//        printf("CHaracter coordinates %f, %f ,%f , %f",CharacterTop,characterBottom,characterRight,characterLeft);
+    }
+    // Print character coordinates
+//    printf("Character Coordinates: Left: %.2f, Right: %.2f, Bottom: %.2f, Top: %.2f\n",
+//           characterLeft, characterRight, characterBottom, CharacterTop);
     float collectibleRight=collectibleX+15;
     float collectibleTop=collectibleY+15;
     float collectibleBottom=collectibleY-15;
@@ -633,14 +669,30 @@ bool checkCollisionCollectible(float collectibleX,float collectibleY, float coll
                          characterLeft > collectibleRight ||
                          CharacterTop < collectibleBottom ||
                          characterBottom > collectibleTop);
+//    if (isFlying)
+//    {
+//        printf("Collectible Coordinates: Left: %.2f, Right: %.2f, Bottom: %.2f, Top: %.2f\n",
+//               collectibleLeft, collectibleRight, collectibleBottom, collectibleTop);
+//        printf("Collision Detected: %s\n", isColliding ? "Yes" : "No");
+//    }
+
     return isColliding;
 
 }
 bool checkCollisionFlying(float flyingX,float flyingY) {
     float characterLeft=characterX-50;
     float characterRight=characterX+40;
-    float characterBottom=characterY-148;
-    float CharacterTop= characterY+60-duckingDistance;
+    float characterBottom;
+    float CharacterTop;
+    if (!isFlying)
+    {
+        characterBottom=characterY-148;
+        CharacterTop= characterY+60-duckingDistance;
+    }
+    else{
+        float characterBottom=characterY-60;
+        float CharacterTop= windowHeight-50;
+    }
     float flyingRight=flyingX+15;
     float flyingTop=flyingY+15;
     float flyingBottom=flyingY-15;
@@ -655,8 +707,17 @@ bool checkCollisionFlying(float flyingX,float flyingY) {
 bool checkCollisionCoin(float coinX,float coinY) {
     float characterLeft=characterX-50;
     float characterRight=characterX+40;
-    float characterBottom=characterY-148;
-    float CharacterTop= characterY+60-duckingDistance;
+    float characterBottom;
+    float CharacterTop;
+    if (!isFlying)
+    {
+        characterBottom=characterY-148;
+        CharacterTop= characterY+60-duckingDistance;
+    }
+    else{
+        float characterBottom=characterY-60;
+        float CharacterTop= windowHeight-50;
+    }
     float coinRight=coinX+12.5;
     float coinTop=coinY+12.5;
     float coinBottom=coinY-12.5;
@@ -685,7 +746,7 @@ void updateStars() {
 
 
 
-//----------------------------- OBSTACLE GENERATION AND UPDATE ----------------------------
+//--------------------------OBSTACLE GENERATION AND UPDATE ----------------------------
 void generateObstacle() {
     Obstacle obstacle;
     obstacle.x = windowWidth;
@@ -999,19 +1060,14 @@ void updateCharacter(int value) {
             } else {
                 isJumping = false;  // Stop jumping when max height is reached
             }
-        } else if (characterY > fixedcharacterY) {
+        } else if (characterY > fixedcharacterY && !isFlying) {
             characterY -= gravity;  // Gravity pulls the character back down
         } else {
             characterY = fixedcharacterY;  // Ensure the character stays at ground level after falling
             
             
         }
-        
-        if (isFlying)
-        {
-            characterY = windowHeight - 105.0f;
-            
-        }
+
         
         glutPostRedisplay(); // Request a redraw
     }
@@ -1119,7 +1175,7 @@ void display() {
         drawText(powerUpMessage, windowWidth - 400.0f, windowHeight - 70.0f);
 
       // 5 minutes is the game time
-        if (elapsedTime >= 50.0f) {
+        if (elapsedTime >= 180.0f) {
             gameEnded = true;
         }
     }
