@@ -7,7 +7,7 @@
 #include <ctime>
 //#include <SDL.H>
 //#include <SDL_mixer.h>
-//CHaracter coordinates top 290.000000, bottom 347.106018 ,right 140.000000 , left 50.000000collectible coordinates top 535.000000, bottom 505.000000 ,right 561.190002 , left 531.19000
+
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 int windowWidth = 700;
 int windowHeight = 700;
@@ -335,18 +335,15 @@ void drawHealth() {
         }
 }
 void drawObstacle(float x, float y, float height) {
-    // UFO body color (metallic gray)
-    glColor3f(0.5f, 0.5f, 0.5f); // Gray for the UFO body
-    drawEllipse(x, y, 25.0f, 15.0f, 50); // UFO shape
+    glColor3f(0.5f, 0.5f, 0.5f);
+    drawEllipse(x, y, 25.0f, 15.0f, 50);
 
-    // UFO dome color (light blue with a glowing effect)
-    glColor3f(0.1f, 0.4f, 0.8f); // Light blue for the dome
-    drawCircle(x, y + 10.0f, 10.0f, 30); // Dome shape
+    glColor3f(0.1f, 0.4f, 0.8f);
+    drawCircle(x, y + 10.0f, 10.0f, 30);
 
-    // Lights on the UFO (glowing green)
-    glColor3f(0.0f, 1.0f, 0.0f); // Green for lights
-    drawCircle(x - 15.0f, y - 2.5f, 1.25f, 20); // Left light
-    drawCircle(x, y - 2.5f, 1.25f, 20); // Center light
+    glColor3f(0.0f, 1.0f, 0.0f);
+    drawCircle(x - 15.0f, y - 2.5f, 1.25f, 20);
+    drawCircle(x, y - 2.5f, 1.25f, 20);
     drawCircle(x + 15.0f, y - 2.5f, 1.25f, 20); // Right light
 
     // Optionally, you can add a glowing effect around the lights
@@ -395,32 +392,28 @@ void drawPlane(float x, float y) {
     glVertex2f(x, animatedY);                  // Bottom left of the body
     glEnd();
 
-    // Draw the left wing (light blue triangle)
-    glColor3f(0.5f, 0.7f, 1.0f); // Light blue wing
+    glColor3f(0.5f, 0.7f, 1.0f);
     glBegin(GL_TRIANGLES);
-    glVertex2f(x + 80.0f, animatedY);             // Bottom of the body (center)
-    glVertex2f(x + 20.0f, animatedY - 90.0f);     // Left wing tip (below the body)
-    glVertex2f(x + 160.0f, animatedY);            // Bottom center of the body
+    glVertex2f(x + 80.0f, animatedY);
+    glVertex2f(x + 20.0f, animatedY - 90.0f);
+    glVertex2f(x + 160.0f, animatedY);
     glEnd();
 
-    // Reflect the left wing across y = animatedY + 25 (new wing above the plane)
     glBegin(GL_TRIANGLES);
-    glVertex2f(x + 80.0f, animatedY + 50.0f);      // Reflection of Bottom of the body (center) across y = animatedY + 25
-    glVertex2f(x + 20.0f, animatedY + 140.0f);     // Reflection of Left wing tip across y = animatedY + 25
-    glVertex2f(x + 160.0f, animatedY + 50.0f);     // Reflection of Bottom center of the body across y = animatedY + 25
+    glVertex2f(x + 80.0f, animatedY + 50.0f);
+    glVertex2f(x + 20.0f, animatedY + 140.0f);
+    glVertex2f(x + 160.0f, animatedY + 50.0f);
     glEnd();
 
-    // Reflect the tail across y = animatedY + 25 (new tail below the plane)
-    glColor3f(0.5f, 0.7f, 1.0f); // Light blue tail reflection
+    glColor3f(0.5f, 0.7f, 1.0f);
     glBegin(GL_TRIANGLES);
-    glVertex2f(x, animatedY + 50.0f);      // Reflection of Top left of the body
-    glVertex2f(x - 40.0f, animatedY - 40.0f);   // Reflection of Top of the tail
-    glVertex2f(x, animatedY);              // Reflection of Bottom left of the body
+    glVertex2f(x, animatedY + 50.0f);
+    glVertex2f(x - 40.0f, animatedY - 40.0f);
+    glVertex2f(x, animatedY);
     glEnd();
 
-    // Draw windows (small circles) in light blue
     for (float i = x + 40.0f; i <= x + 200.0f; i += 60.0f) {
-        glColor3f(0.5f, 0.7f, 1.0f); // Light blue windows
+        glColor3f(0.5f, 0.7f, 1.0f);
 
         glBegin(GL_POLYGON);
         for (int j = 0; j < 100; j++) {
@@ -428,16 +421,14 @@ void drawPlane(float x, float y) {
             glVertex2f(i + 10.0f * cos(theta), animatedY + 25.0f + 10.0f * sin(theta));
         }
         glEnd();
-
-        // Draw white dot inside the window
-        glPointSize(2.0f);  // Set large point size for the dot
-        glColor3f(1.0f, 1.0f, 1.0f); // White color for the dot
+        glPointSize(2.0f);
+        glColor3f(1.0f, 1.0f, 1.0f);
         glBegin(GL_POINTS);
-        glVertex2f(i, animatedY + 25.0f);  // Draw point at the center of the window
+        glVertex2f(i, animatedY + 25.0f);
         glEnd();
     }
 
-    glPopMatrix(); // Restore the previous transformation state
+    glPopMatrix();
 }
 void drawFlyingPowerUp(float x, float y) {
 
@@ -448,33 +439,30 @@ void drawFlyingPowerUp(float x, float y) {
     
 }
 void drawGround() {
-    // Draw the filled rectangle (ground background)
-    glColor3f(0.1f, 0.1f, 0.2f);  // Dark Galactic Teal
-    glBegin(GL_QUADS);  // Draw a rectangle with 4 vertices
+    glColor3f(0.1f, 0.1f, 0.2f);
+    glBegin(GL_QUADS);
     glVertex2f(0.0f, 100.0f);
     glVertex2f(windowWidth, 100.0f);
     glVertex2f(windowWidth, 0.0f);
     glVertex2f(0.0f, 0.0f);
     glEnd();
 
-    // Draw lines inside the ground for texture
-    glColor3f(0.3f, 0.5f, 0.7f);  // Cosmic Blue
+    glColor3f(0.3f, 0.5f, 0.7f);
     glBegin(GL_LINES);
     for (float x = 0.0f; x < windowWidth; x += 40.0f) {
         glVertex2f(x, 0.0f);
-        glVertex2f(x, 100.0f);  // Vertical lines
+        glVertex2f(x, 100.0f);
     }
     glEnd();
 
     glBegin(GL_LINES);
     for (float y = 0.0f; y <= 100.0f; y += 20.0f) {
         glVertex2f(0.0f, y);
-        glVertex2f(windowWidth, y);  // Horizontal lines
+        glVertex2f(windowWidth, y);
     }
     glEnd();
 
-    // Add some triangles for extra pattern in the middle
-    glColor3f(0.5f, 0.7f, 0.9f);  // Lighter Cosmic Blue
+    glColor3f(0.5f, 0.7f, 0.9f);
     glBegin(GL_TRIANGLES);
     for (float x = 20.0f; x < windowWidth; x += 80.0f) {
         glVertex2f(x, 50.0f);
@@ -482,9 +470,7 @@ void drawGround() {
         glVertex2f(x + 60.0f, 50.0f);
     }
     glEnd();
-
-    // Draw points in between the lines and triangles for texture
-    glColor3f(0.8f, 1.0f, 0.8f);  // Luminous Green
+    glColor3f(0.8f, 1.0f, 0.8f);
     glBegin(GL_POINTS);
     for (float x = 10.0f; x < windowWidth; x += 30.0f) {
         for (float y = 10.0f; y < 100.0f; y += 30.0f) {
@@ -495,11 +481,11 @@ void drawGround() {
 }
 
 void drawStar(float centerX, float centerY, float outerRadius, float innerRadius, int points) {
-    glColor3f(1.0f, 1.0f, 1.0f); // Set star color to yellow
+    glColor3f(1.0f, 1.0f, 1.0f);
 
-    glBegin(GL_LINE_LOOP); // Start drawing a line loop
+    glBegin(GL_LINE_LOOP);
     for (int i = 0; i < points * 2; i++) {
-        float angle = i * M_PI / points; // Calculate angle
+        float angle = i * M_PI / points;
         float r = (i % 2 == 0) ? outerRadius : innerRadius;
 
         glVertex2f(centerX + cos(angle) * r, centerY + sin(angle) * r);
@@ -507,35 +493,28 @@ void drawStar(float centerX, float centerY, float outerRadius, float innerRadius
     glEnd();
 }
 void drawUpperFrame() {
-    // Set the width for each rectangle
-    float rectWidth = 700.0f / 3.0f; // Width of each rectangle
+    float rectWidth = 700.0f / 3.0f;
 
-    glColor3f(0.2f, 0.6f, 0.8f);  // A brighter sky blue for better visibility
-
-    // 1. Top-left rectangle
+    glColor3f(0.2f, 0.6f, 0.8f);
     glBegin(GL_QUADS);
     glVertex2f(0.0f, windowHeight - 50.0f);
-    glVertex2f(rectWidth, windowHeight - 50.0f);  // Width of the left rectangle
+    glVertex2f(rectWidth, windowHeight - 50.0f);
     glVertex2f(rectWidth, windowHeight);
     glVertex2f(0.0f, windowHeight);
     glEnd();
     
-    glColor3f(0.0f, 0.4f, 0.6f);  // A medium teal blue with less saturation
-
-    // 2. Middle rectangle
+    glColor3f(0.0f, 0.4f, 0.6f);
     glBegin(GL_QUADS);
-    glVertex2f(rectWidth, windowHeight - 50.0f);  // Starts where the left rectangle ends
-    glVertex2f(rectWidth * 2.0f, windowHeight - 50.0f);  // Width of the middle rectangle
+    glVertex2f(rectWidth, windowHeight - 50.0f);
+    glVertex2f(rectWidth * 2.0f, windowHeight - 50.0f);
     glVertex2f(rectWidth * 2.0f, windowHeight);
     glVertex2f(rectWidth, windowHeight);
     glEnd();
 
-    glColor3f(0.0f, 0.0f, 0.4f);  // A darker shade for the top-right rectangle
-
-    // 3. Top-right rectangle
+    glColor3f(0.0f, 0.0f, 0.4f);
     glBegin(GL_QUADS);
-    glVertex2f(rectWidth * 2.0f, windowHeight - 50.0f);  // Starts where the middle rectangle ends
-    glVertex2f(rectWidth * 3.0f, windowHeight - 50.0f);  // Width of the right rectangle
+    glVertex2f(rectWidth * 2.0f, windowHeight - 50.0f);
+    glVertex2f(rectWidth * 3.0f, windowHeight - 50.0f);
     glVertex2f(rectWidth * 3.0f, windowHeight);
     glVertex2f(rectWidth * 2.0f, windowHeight);
     glEnd();
@@ -544,62 +523,50 @@ void drawUpperFrame() {
     drawStar(350, 675, 25, 10, 5);
 }
 void drawCoin(float x, float y) {
-    // Save the current matrix state
     glPushMatrix();
 
     glTranslatef(x, y, 0);
     
-    // Calculate the scale factor for pulsing effect
-    float scale = 1.0f + 0.1f * sin(glutGet(GLUT_ELAPSED_TIME) * 0.005f); // Pulses between 1.0 and 1.1
-    glScalef(scale, scale, 1.0f); // Apply scaling transformation
+    float scale = 1.0f + 0.1f * sin(glutGet(GLUT_ELAPSED_TIME) * 0.005f); // between 1 and 1.1
+    glScalef(scale, scale, 1.0f);
 
-    // Draw the outer circle (gold color)
     glColor3f(1.0f, 0.84f, 0.0f);
-    drawCircle(0.0f, 0.0f, 25.0f, 25); // Outer circle (at origin)
+    drawCircle(0.0f, 0.0f, 25.0f, 25);
+    glColor3f(0.8f, 0.7f, 0.0f);
+    drawCircle(0.0f, 0.0f, 15.0f, 15);
 
-    // Draw the inner part of the coin (slightly darker)
-    glColor3f(0.8f, 0.7f, 0.0f); // Slightly darker gold color
-    drawCircle(0.0f, 0.0f, 15.0f, 15); // Inner circle (at origin)
-
-    // Draw the lighting effect (white triangle) in the upper left corner
-    glColor3f(1.0f, 1.0f, 1.0f); // White color for the lighting effect
+    glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_TRIANGLES);
-    glVertex2f(-15.0f, 10.0f);  // Top left
-    glVertex2f(-5.0f, 10.0f);   // Top right
-    glVertex2f(-15.0f, 5.0f);    // Bottom left
+    glVertex2f(-15.0f, 10.0f);
+    glVertex2f(-5.0f, 10.0f);
+    glVertex2f(-15.0f, 5.0f);
     glEnd();
 
-    // Restore the previous matrix state
     glPopMatrix();
 
-    // Draw the text "x2" in black at a fixed position
-    glColor3f(0.0f, 0.0f, 0.0f); // Black color
-    drawText("x 2", x - 10, y - 10); // Position the text relative to the coin
+    glColor3f(0.0f, 0.0f, 0.0f);
+    drawText("x 2", x - 10, y - 10);
 
-    // Define the points for the inner square
-    float squareSize = 10.0f; // Size of the inner square
+    float squareSize = 10.0f;
     float offsetX = squareSize / 2;
     float offsetY = squareSize / 2;
 
-    // Define the points for the outer square (higher above the inner square)
-    float outerSquareSize = 20.0f; // Size of the outer square
+    float outerSquareSize = 20.0f;
     float outerOffsetX = outerSquareSize / 2;
     float outerOffsetY = outerSquareSize / 2;
 
-    // Define the four points for the outer square
     float outerPoints[4][2] = {
-        {x - outerOffsetX - 2, y + outerOffsetY}, // Top left
-        {x + outerOffsetX - 2, y + outerOffsetY}, // Top right
-        {x + outerOffsetX - 2, y - outerOffsetY - 2}, // Bottom right
-        {x - outerOffsetX - 2, y - outerOffsetY - 2} // Bottom left
+        {x - outerOffsetX - 2, y + outerOffsetY},
+        {x + outerOffsetX - 2, y + outerOffsetY},
+        {x + outerOffsetX - 2, y - outerOffsetY - 2},
+        {x - outerOffsetX - 2, y - outerOffsetY - 2}
     };
 
-    // Draw the points above each vertex of the inner square
-    glColor3f(0.8f, 0.52f, 0.25f); // Light brown color for points
-    glPointSize(3.0f); // Set the point size to be larger
+    glColor3f(0.8f, 0.52f, 0.25f);
+    glPointSize(3.0f);
     glBegin(GL_POINTS);
     for (int i = 0; i < 4; i++) {
-        glVertex2f(outerPoints[i][0], outerPoints[i][1]); // Draw each outer point
+        glVertex2f(outerPoints[i][0], outerPoints[i][1]);
     }
     glEnd();
 }
@@ -656,11 +623,9 @@ bool checkCollisionCollectible(float collectibleX,float collectibleY, float coll
     else{
         characterBottom=650-210;
          CharacterTop= 650;
-//        printf("CHaracter coordinates %f, %f ,%f , %f",CharacterTop,characterBottom,characterRight,characterLeft);
+
     }
-    // Print character coordinates
-//    printf("Character Coordinates: Left: %.2f, Right: %.2f, Bottom: %.2f, Top: %.2f\n",
-//           characterLeft, characterRight, characterBottom, CharacterTop);
+ 
     float collectibleRight=collectibleX+15;
     float collectibleTop=collectibleY+15;
     float collectibleBottom=collectibleY-15;
@@ -669,13 +634,6 @@ bool checkCollisionCollectible(float collectibleX,float collectibleY, float coll
                          characterLeft > collectibleRight ||
                          CharacterTop < collectibleBottom ||
                          characterBottom > collectibleTop);
-//    if (isFlying)
-//    {
-//        printf("Collectible Coordinates: Left: %.2f, Right: %.2f, Bottom: %.2f, Top: %.2f\n",
-//               collectibleLeft, collectibleRight, collectibleBottom, collectibleTop);
-//        printf("Collision Detected: %s\n", isColliding ? "Yes" : "No");
-//    }
-
     return isColliding;
 
 }
@@ -733,12 +691,11 @@ bool checkCollisionCoin(float coinX,float coinY) {
 //----------------------------- COLLECTIBLES ----------------------------
 void updateStars() {
     for (auto &star : stars) {
-        star.brightness += star.speed; // Update brightness
+        star.brightness += star.speed;
 
-        // Reverse speed if brightness goes out of bounds
         if (star.brightness > 1.0f || star.brightness < 0.0f) {
             star.speed = -star.speed;
-            star.brightness = std::clamp(star.brightness, 0.0f, 1.0f); // Keep within bounds
+            star.brightness = std::clamp(star.brightness, 0.0f, 1.0f);
         }
     }
 }
@@ -762,7 +719,7 @@ void generateObstacle() {
     if (timerPowerUpDisplay==2 || timerPowerUpDisplay==22 || timerPowerUpDisplay==17)
     {
         powerUpCoin p;
-               p.x = windowWidth; // Start from the right side of the screen
+               p.x = windowWidth;
        
                p.y = (obstacle.y == 120) ? 400 : 190;
                coins.push_back(p);
@@ -771,7 +728,7 @@ void generateObstacle() {
     else if (timerPowerUpDisplay== 8 || timerPowerUpDisplay== 31)
     {
         powerUpFly pf;
-               pf.x = windowWidth; // Start from the right side of the screen
+               pf.x = windowWidth;
        
                pf.y = (obstacle.y == 120) ? 400 : 190;
                  flyingPowerUp.push_back(pf);
@@ -779,13 +736,12 @@ void generateObstacle() {
   
     else
     {
-        int randomItem = rand() % 2; // Generates 0, 1, or 2
+        int randomItem = rand() % 2;
         
-        if (randomItem == 0) { // Generate a collectible
+        if (randomItem == 0) {
             Collectible collectible;
-            collectible.x = windowWidth; // Start from the right side of the screen
-            collectible.height = 20; // Set a fixed height for collectibles
-            // Set the collectible's Y position based on obstacle's Y position
+            collectible.x = windowWidth;
+            collectible.height = 20;
             collectible.y = (obstacle.y == 120) ? 350 : 140;
             collecibles.push_back(collectible);
         }
@@ -814,30 +770,27 @@ void updateObstacles(int value) {
 if (!gameEnded)
 {
     if (powerUpActive) {
-        // Calculate current time and duration
         auto currentTime = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime).count();
-        int remainingTime = 12 - duration; // 10 seconds for power-up duration
+        int remainingTime = 12 - duration;
         
         if (remainingTime > 0) {
             const char* baseMessage = "Double Score Active:  ";
             
-            // Calculate total length needed for the new message
-            int messageLength = strlen(baseMessage) + 20; // +20 for the remaining time part
-            powerUpMessage = new char[messageLength]; // Allocate memory for the combined message
+            int messageLength = strlen(baseMessage) + 20;
+            powerUpMessage = new char[messageLength];
             
-            // Format the message with the remaining time
             sprintf(powerUpMessage, "%s%d seconds remaining", baseMessage, remainingTime);
         } else {
-            delete[] powerUpMessage; // Free the previously allocated memory
-            powerUpMessage = nullptr; // Clear the pointer if no power-ups are active
+            delete[] powerUpMessage;
+            powerUpMessage = nullptr;
         }
         
         if (duration >= 12) {
-            scoreAdditionFactor = 1; // Reset the score factor after 20 seconds
+            scoreAdditionFactor = 1;
             powerUpActive = false; 
-            time_t now = time(0);               // Get the current time in seconds
-            tm *ltm = localtime(&now);          // Convert it to local time format
+            time_t now = time(0);
+            tm *ltm = localtime(&now);
             
             
             printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
@@ -848,29 +801,25 @@ if (!gameEnded)
         
         auto currentTime = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime2).count();
-        int remainingTime = 12 - duration; // 10 seconds for power-up2 duration
+        int remainingTime = 12 - duration;
         
         if (remainingTime > 0) {
             const char* baseMessage = "Flying Active:  ";
             
-            // Calculate total length needed for the new message
-            int messageLength = strlen(baseMessage) + 20; // +20 for the remaining time part
-            powerUpMessage = new char[messageLength]; // Allocate memory for the combined message
-            
-            // Format the message with the remaining time
+            int messageLength = strlen(baseMessage) + 20;
+            powerUpMessage = new char[messageLength];
             sprintf(powerUpMessage, "%s%d seconds remaining", baseMessage, remainingTime);
         } else {
-            delete[] powerUpMessage; // Free the previously allocated memory
-            powerUpMessage = nullptr; // Clear the pointer if no power-ups are active
+            delete[] powerUpMessage;
+            powerUpMessage = nullptr;
         }
         if (duration >= 12) {
             isFlying=false;
             characterY = fixedcharacterY;
             powerUpActive2 = false;
-            time_t now = time(0);               // Get the current time in seconds
-            tm *ltm = localtime(&now);          // Convert it to local time format
+            time_t now = time(0);
+            tm *ltm = localtime(&now);
             
-            // Print the message with the current time
             printf("I JUST RESET FLYING POWERUP at %02d:%02d:%02d\n",
                    ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
         }
@@ -896,25 +845,21 @@ if (!gameEnded)
     }
     
     collectibleRotationAngle += 0.5f;
-    coinAngle += 1.0f;// Adjust this value for slower or faster rotation
+    coinAngle += 1.0f;
     if (collectibleRotationAngle >= 360.0f) {
-        collectibleRotationAngle -= 360.0f;  // Keep the angle within 0-360 degrees
+        collectibleRotationAngle -= 360.0f;
     }
-    // Move obstacles to the left
     for (int i = 0; i < obstacles.size(); ++i) {
-        obstacles[i].x -= (obstacleSpeed+speedMultiplier); // Move obstacle
+        obstacles[i].x -= (obstacleSpeed+speedMultiplier);
         
-        // Check if an obstacle is off the screen
         if (obstacles[i].x < -30.0f) {
             obstacles.erase(obstacles.begin() + i);
             --i;
             continue;
         }
         
-        // Check collision with character
         if (checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
             health--;
-            // howa 5abat hena
             
             printf("HEALTH NOW %d\n",health);
             if (health <= 0) {
@@ -923,18 +868,15 @@ if (!gameEnded)
             obstacles.erase(obstacles.begin() + i);
             --i;
         }
-        // No need to erase the obstacle, just handle the recoil
-        // obstacles.erase(obstacles.begin() + i); // Remove this line
-        // --i; // Remove this line as well
+       
     }
     
     
     
-    // Move collectibles to the left
     for (int i = 0; i < collecibles.size(); ++i) {
-        collecibles[i].x -= (obstacleSpeed+speedMultiplier); // Move collectible to the left
+        collecibles[i].x -= (obstacleSpeed+speedMultiplier);
         
-        // Check if a collectible is off the screen
+       
         if (collecibles[i].x < -30.0f) {
             collecibles.erase(collecibles.begin() + i);
             --i;
@@ -947,9 +889,8 @@ if (!gameEnded)
         }
     }
     for (int i = 0; i < coins.size(); ++i) {
-        coins[i].x -= (obstacleSpeed+speedMultiplier); // Move collectible to the left
+        coins[i].x -= (obstacleSpeed+speedMultiplier);
         
-        // Check if a collectible is off the screen
         if (coins[i].x < -30.0f) {
             coins.erase(coins.begin() + i);
             --i;
@@ -957,12 +898,11 @@ if (!gameEnded)
         }
         if (checkCollisionCoin(coins[i].x,coins[i].y)) {
             scoreAdditionFactor=2;
-            powerUpStartTime = std::chrono::steady_clock::now(); // Start timer
+            powerUpStartTime = std::chrono::steady_clock::now();
             powerUpActive = true;
-            time_t now = time(0);               // Get the current time in seconds
-            tm *ltm = localtime(&now);          // Convert it to local time format
+            time_t now = time(0);
+            tm *ltm = localtime(&now);
             
-            // Print the message with the current time
             printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
                    ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
             coins.erase(coins.begin() + i);
@@ -970,23 +910,20 @@ if (!gameEnded)
         }
     }
     for (int i = 0; i < flyingPowerUp.size(); ++i) {
-        flyingPowerUp[i].x -= (obstacleSpeed+speedMultiplier); // Move collectible to the left
+        flyingPowerUp[i].x -= (obstacleSpeed+speedMultiplier);
         
-        // Check if a collectible is off the screen
         if (flyingPowerUp[i].x < -30.0f) {
             flyingPowerUp.erase(flyingPowerUp.begin() + i);
             --i;
             continue;
         }
         if (checkCollisionFlying(flyingPowerUp[i].x, flyingPowerUp[i].y)) {
-            // printf("I TOOK A FLYING POWER UP");
             isFlying=true;
-            powerUpStartTime2 = std::chrono::steady_clock::now(); // Start timer
+            powerUpStartTime2 = std::chrono::steady_clock::now();
             powerUpActive2 = true;
-            time_t now = time(0);               // Get the current time in seconds
-            tm *ltm = localtime(&now);          // Convert it to local time format
+            time_t now = time(0);
+            tm *ltm = localtime(&now);
             
-            // Print the message with the current time
             printf("I JUST ACTIVATED FLYING POWERUP at %02d:%02d:%02d\n",
                    ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
             flyingPowerUp.erase(flyingPowerUp.begin() + i);
@@ -995,33 +932,32 @@ if (!gameEnded)
     }
     
 }
-    // Call this function again after 16 ms (~60 FPS)
     glutTimerFunc(16, updateObstacles, 0);
 
 }
 
-//----------------------------- OBSTACLE GENERATION AND UPDATE ----------------------------
+//----------------------- OBSTACLE GENERATION AND UPDATE ----------------------------
 
 
 //----------------------------- KEYBOARD ACTIONS ----------------------------
 
 void keyPress(unsigned char key, int x, int y) {
-    if (key == ' ') { // Space key for jump
+    if (key == ' ') {
         if (!isJumping && characterY ==fixedcharacterY) {
             isJumping = true;
         }
     }
-    if (key == GLUT_KEY_DOWN) { // Down arrow to duck
+    if (key == GLUT_KEY_DOWN) {
            isDucking = true;
        }
 }
 
 // Key release handler
 void keyUp(unsigned char key, int x, int y) {
-    if (key == ' ') { // Reset position on key release
+    if (key == ' ') {
         isJumping = false;
     }
-    if (key == GLUT_KEY_DOWN) { // Reset duck state
+    if (key == GLUT_KEY_DOWN) {
            isDucking = false;
        }
 }
@@ -1058,12 +994,12 @@ void updateCharacter(int value) {
             if (characterY < maxjumpHeight) {
                 characterY += jumpSpeed;
             } else {
-                isJumping = false;  // Stop jumping when max height is reached
+                isJumping = false;
             }
         } else if (characterY > fixedcharacterY && !isFlying) {
-            characterY -= gravity;  // Gravity pulls the character back down
+            characterY -= gravity;
         } else {
-            characterY = fixedcharacterY;  // Ensure the character stays at ground level after falling
+            characterY = fixedcharacterY;
             
             
         }
@@ -1071,7 +1007,7 @@ void updateCharacter(int value) {
         
         glutPostRedisplay(); // Request a redraw
     }
-        glutTimerFunc(16, updateCharacter, 0); // Call this function again after 16 ms
+        glutTimerFunc(16, updateCharacter, 0);
     
 }
 //----------------------------- CHARACTER ----------------------------
@@ -1080,16 +1016,16 @@ void updateCharacter(int value) {
 //----------------------------- BACKGROUND ANIMATION ----------------------------
 
 void initStars(int numStars) {
-    srand(static_cast<unsigned>(time(0))); // Seed for random number generation
+    srand(static_cast<unsigned>(time(0)));
     for (int i = 0; i < numStars; i++) {
         Star star;
-        star.x = rand() % windowWidth; // Random x position
-        // Set y position to be within the range of 400 to 500
-        star.y = rand() % 201 + 450; // Random y position from 400 to 500 (inclusive)
-        star.size = rand() % 3 + 2; // Random size between 2 and 5
-        star.brightness = static_cast<float>(rand() % 50 + 50) / 100.0f; // Random brightness between 0.5 and 1.0
+        star.x = rand() % windowWidth;
+       
+        star.y = rand() % 201 + 450;
+        star.size = rand() % 3 + 2;
+        star.brightness = static_cast<float>(rand() % 50 + 50) / 100.0f;
 
-        star.speed = static_cast<float>(rand() % 20 + 10) / 1000.0f; // Random speed for brightness change
+        star.speed = static_cast<float>(rand() % 20 + 10) / 1000.0f;
         stars.push_back(star);
     }
 }
@@ -1114,7 +1050,7 @@ void display() {
            char endMessage[50];
            sprintf(endMessage, "YOUU LOST:(( , Score : %d",score);
            
-           glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+           glColor3f(1.0f, 1.0f, 1.0f);
 
            drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
            
@@ -1125,7 +1061,7 @@ void display() {
                char endMessage[50];
                sprintf(endMessage, "Game End! Score: %d", score);
                
-               glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+               glColor3f(1.0f, 1.0f, 1.0f);
 
                drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
                
@@ -1133,10 +1069,10 @@ void display() {
     }
     else {
        
-           glClearColor(0.0, 0.0, 0.0, 1.0f); // Set the background color
+           glClearColor(0.0, 0.0, 0.0, 1.0f);
     
 
-        drawUpperFrame();  // Add the upper frame
+        drawUpperFrame();
         drawHealth();
         drawCharacter();
 
@@ -1158,23 +1094,22 @@ void display() {
         drawGround();
 
         // Time Tracking
-        static float lastTime = 0.0f; // Variable to store the last frame time
-        float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f; // Get current time in seconds
-        elapsedTime += currentTime - lastTime; // Update elapsed time
-        lastTime = currentTime; // Update last frame time
+        static float lastTime = 0.0f;
+        float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+        elapsedTime += currentTime - lastTime;
+        lastTime = currentTime;
 
-        // Score and Time Display
         char scoreText[50];
         char timeString[50];
-        sprintf(timeString, "Time: %.2f seconds", elapsedTime);  // Format time as string
+        sprintf(timeString, "Time: %.2f seconds", elapsedTime);
         sprintf(scoreText, "Score: %d", score);
 
-        glColor3f(1.0f, 1.0f, 1.0f); // Set text color to white
+        glColor3f(1.0f, 1.0f, 1.0f);
         drawText(scoreText, windowWidth - 200.0f, windowHeight - 20.0f);
         drawText(timeString, windowWidth - 200.0f, windowHeight - 40.0f);
         drawText(powerUpMessage, windowWidth - 400.0f, windowHeight - 70.0f);
 
-      // 5 minutes is the game time
+      // 3 minutes is the game time
         if (elapsedTime >= 180.0f) {
             gameEnded = true;
         }
@@ -1186,16 +1121,16 @@ void display() {
 void timer(int value) {
     if (!gameEnded)
     {
-        timeforBackgroundColor += 0.01f; // Update the time elapsed
-        glutPostRedisplay(); // Trigger a redraw
+        timeforBackgroundColor += 0.01f;
+        glutPostRedisplay();
     }
-    glutTimerFunc(16, timer, 0); // Call timer again after 16 ms (~60 FPS)
+    glutTimerFunc(16, timer, 0);
 }
 
 //--------------------------------DISPLAY -----------------------------------
 
 
-//----------------------- RESET GAME (WITH ORIGINAL HEALTH AND SCORE---------------------------
+//--------------- RESET GAME (WITH ORIGINAL HEALTH AND SCORE----------------------
 
 //void resetGame(int score)
 //{
@@ -1219,15 +1154,15 @@ int main(int argc, char** argv) {
     glutCreateWindow("UFO ALIEN GAME");
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     gluOrtho2D(0.0, windowWidth, 0.0, windowHeight);
-    initStars(80); // Initialize 100 stars
+    initStars(80);
     glutDisplayFunc(display);
     glutTimerFunc(0, updateCharacter, 0);
     glutTimerFunc(16, updateObstacles, 0);
     glutTimerFunc(0, timer, 0);
     glutKeyboardFunc(keyPress);
     glutKeyboardUpFunc(keyUp);
-    glutSpecialFunc(specialKeyPress); // Special key input
-    glutSpecialUpFunc(specialKeyUp);   // Special key release input
+    glutSpecialFunc(specialKeyPress);
+    glutSpecialUpFunc(specialKeyUp);
     glutMainLoop();
 
     return 0;
