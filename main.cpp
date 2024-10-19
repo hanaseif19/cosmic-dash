@@ -14,6 +14,7 @@ int windowHeight = 700;
 float elapsedTime = 0.0f; // to keep track of time to display it throughout the game
 bool gameEnded = false; // Variable to check if the game has ended
 float timeforBackgroundColor=0.0f;
+bool gameStarted = false; // Game state variable
 
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 //-------------------------------- SOUND CONFIGURATIONS-----------------------------------
@@ -30,6 +31,8 @@ void initAudio() {
             printf("Failed to load background music! SDL_mixer Error: %s\n", Mix_GetError());
         }
     }
+    gameStarted = true;
+    elapsedTime = 0.0f;
     Mix_VolumeMusic(45);
 }
 void playBackgroundMusic() {
@@ -76,7 +79,7 @@ float fixedcharacterX = 100.0f; // his fixed original x coordinate (center of hi
 float fixedcharacterY = 250.0f; // his current y coordinate (center of his head) -> to bring him back to original position when he ducks
 bool isJumping = false; // tracks whether he's jumping or not according to space key press
 float maxjumpHeight = 400.0f; // the maximum height to which he can jump to le fo2
-float gravity=3.0f; // kol mara benazel men el distance ad eh w howa beyenzel men el jump
+float gravity=3.3f; // kol mara benazel men el distance ad eh w howa beyenzel men el jump
 float jumpSpeed=50.0f; // 3aks el gravity bas el fo2
 bool isDucking = false; // tracks whether he's ducking or not according to lower arrow key press
 float duckingDistance=0; // distance he ducks down
@@ -100,6 +103,7 @@ float obstacleSpeed = 4.0f;
 //-------------------------------- POWER-UPS RELATED -----------------------------------
 int timerPowerUpDisplay=0;
 char* powerUpMessage = nullptr;
+char* powerUpMessage2 = nullptr;
 float coinAngle = 0.0f;
 struct powerUpCoin {
     float x;
@@ -775,7 +779,7 @@ void generateObstacle() {
                coins.push_back(p);
         
     }
-    else if (timerPowerUpDisplay== 8 || timerPowerUpDisplay== 31)
+    else if (timerPowerUpDisplay== 1 || timerPowerUpDisplay== 31)
     {
         powerUpFly pf;
                pf.x = windowWidth;
@@ -796,10 +800,29 @@ void generateObstacle() {
             collecibles.push_back(collectible);
         }
        
-        else
-        {
+        
+    }
+    if (!obstacles.empty()) {
+        // Check the last obstacle's X position and generate collectibles in between
+        for (size_t i = 0; i < obstacles.size() - 1; ++i) {
+            if (obstacles[i].x > 0 && obstacles[i + 1].x > obstacles[i].x + 100) { // Adjust space as needed
+                // Calculate the space between the two obstacles
+                float gap = obstacles[i + 1].x - obstacles[i].x;
+                int numCollectibles = gap / 500; // Increase divisor to reduce the number of collectibles
+
+                for (int j = 1; j <= numCollectibles; ++j) {
+                    Collectible collectible;
+                    collectible.x = obstacles[i].x + (j * 150); // Adjust spacing accordingly
+                    collectible.height = 20;
+                    collectible.y = 100 + static_cast<float>(rand()) / RAND_MAX * (500 - 100 - collectible.height);
+
+                    collecibles.push_back(collectible);
+                }
+            }
         }
     }
+
+
 }
 void generateCollectibleForFlying() {
     
@@ -857,11 +880,11 @@ if (!gameEnded)
             const char* baseMessage = "Flying Active:  ";
             
             int messageLength = strlen(baseMessage) + 20;
-            powerUpMessage = new char[messageLength];
-            sprintf(powerUpMessage, "%s%d seconds remaining", baseMessage, remainingTime);
+            powerUpMessage2 = new char[messageLength];
+            sprintf(powerUpMessage2, "%s%d seconds remaining", baseMessage, remainingTime);
         } else {
-            delete[] powerUpMessage;
-            powerUpMessage = nullptr;
+            delete[] powerUpMessage2;
+            powerUpMessage2 = nullptr;
         }
         if (duration >= 12) {
             isFlying=false;
@@ -1098,6 +1121,10 @@ void initStars(int numStars) {
 
 
 void display() {
+    if (!gameStarted) {
+        
+          return;
+      }
     glClear(GL_COLOR_BUFFER_BIT);
     if (!gameEnded) {
            playBackgroundMusic();
@@ -1109,6 +1136,7 @@ void display() {
         
        if (health==0)
        {
+           printf("I LOSTTTT");
            char endMessage[50];
            sprintf(endMessage, "YOUU LOST:(( , Score : %d",score);
            
@@ -1122,6 +1150,7 @@ void display() {
        }
            else
            {
+               
                char endMessage[50];
                sprintf(endMessage, "Game End! Score: %d", score);
                
@@ -1173,6 +1202,7 @@ void display() {
         drawText(scoreText, windowWidth - 200.0f, windowHeight - 20.0f);
         drawText(timeString, windowWidth - 200.0f, windowHeight - 40.0f);
         drawText(powerUpMessage, windowWidth - 400.0f, windowHeight - 70.0f);
+        drawText(powerUpMessage2, windowWidth - 400.0f, windowHeight - 90.0f);
 
       // 3 minutes is the game time
         if (elapsedTime >= 180.0f) {
@@ -1240,32 +1270,4 @@ int main(int argc, char** argv) {
 
 
 
-//// Function to play sound with specified file name, duration, and volume
-//void playSound(const char* fileName, int durationMs, int volume) {
-//    // Initialize SDL_mixer
-//    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-//        printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
-//        return;
-//    }
-//
-//    // Load the sound file
-//    Mix_Chunk* soundEffect = Mix_LoadWAV(fileName);
-//    if (soundEffect == NULL) {
-//        printf("Failed to load sound effect! SDL_mixer Error: %s\n", Mix_GetError());
-//        Mix_CloseAudio();
-//        return;
-//    }
-//
-//    // Set the volume
-//    Mix_VolumeChunk(soundEffect, volume); // Volume ranges from 0 (mute) to 128 (max)
-//
-//    // Play the sound effect
-//    Mix_PlayChannel(-1, soundEffect, 0); // -1 means play on the first available channel
-//
-//    // Wait for the specified duration
-//    SDL_Delay(durationMs); // Delay in milliseconds
-//    // Clean up
-//    Mix_FreeChunk(soundEffect); // Free the sound effect
-//    Mix_CloseAudio(); // Close SDL_mixer
-//}
-//
+
