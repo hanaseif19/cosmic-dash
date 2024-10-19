@@ -61,6 +61,7 @@ struct powerUpFly {
     float y;
    
 };
+float powerUpTimer=0.0;
 std::vector<powerUpFly> flyingPowerUp; // data structure to hold of the all tha coins
 float timeElapsedPlane = 0.0f; // Time or frame counter
 const float oscillationAmplitude = 5.0f; // Amplitude of the oscillation
@@ -697,7 +698,7 @@ void generateObstacle() {
     }
     obstacles.push_back(obstacle);
     timerPowerUpDisplay++;
-    if (timerPowerUpDisplay==2 || timerPowerUpDisplay==22)
+    if (timerPowerUpDisplay==2 || timerPowerUpDisplay==22 || timerPowerUpDisplay==17)
     {
         powerUpCoin p;
                p.x = windowWidth; // Start from the right side of the screen
@@ -706,7 +707,7 @@ void generateObstacle() {
                coins.push_back(p);
         
     }
-    else if (timerPowerUpDisplay== 10 || timerPowerUpDisplay== 31)
+    else if (timerPowerUpDisplay== 8 || timerPowerUpDisplay== 31)
     {
         powerUpFly pf;
                pf.x = windowWidth; // Start from the right side of the screen
@@ -733,89 +734,115 @@ void generateObstacle() {
         }
     }
 }
-
+void generateCollectibleForFlying() {
+    
+    
+   
+        Collectible collectible;
+        collectible.x = windowWidth;
+        collectible.height = 20;
+        std::srand(static_cast<unsigned int>(std::time(nullptr)));
+        
+    collectible.y = 500 + std::rand() % (630 - 500 + 1);
+        collecibles.push_back(collectible);
+   
+}
 
 void updateObstacles(int value) {
    
-
+if (!gameEnded)
+{
     if (powerUpActive) {
         // Calculate current time and duration
         auto currentTime = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime).count();
-        int remainingTime = 10 - duration; // 10 seconds for power-up duration
-
+        int remainingTime = 12 - duration; // 10 seconds for power-up duration
+        
         if (remainingTime > 0) {
             const char* baseMessage = "Double Score Active:  ";
             
             // Calculate total length needed for the new message
             int messageLength = strlen(baseMessage) + 20; // +20 for the remaining time part
             powerUpMessage = new char[messageLength]; // Allocate memory for the combined message
-
+            
             // Format the message with the remaining time
             sprintf(powerUpMessage, "%s%d seconds remaining", baseMessage, remainingTime);
         } else {
             delete[] powerUpMessage; // Free the previously allocated memory
             powerUpMessage = nullptr; // Clear the pointer if no power-ups are active
         }
-
-            if (duration >= 10) {
-                scoreAdditionFactor = 1; // Reset the score factor after 20 seconds
-                powerUpActive = false; 
-                time_t now = time(0);               // Get the current time in seconds
-                  tm *ltm = localtime(&now);          // Convert it to local time format
-
-                 
-                printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
-                       ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
-            }
+        
+        if (duration >= 12) {
+            scoreAdditionFactor = 1; // Reset the score factor after 20 seconds
+            powerUpActive = false; 
+            time_t now = time(0);               // Get the current time in seconds
+            tm *ltm = localtime(&now);          // Convert it to local time format
+            
+            
+            printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
+                   ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
         }
+    }
     if (powerUpActive2) {
-            auto currentTime = std::chrono::steady_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime2).count();
-        int remainingTime = 10 - duration; // 10 seconds for power-up2 duration
-
+        
+        auto currentTime = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime2).count();
+        int remainingTime = 12 - duration; // 10 seconds for power-up2 duration
+        
         if (remainingTime > 0) {
             const char* baseMessage = "Flying Active:  ";
             
             // Calculate total length needed for the new message
             int messageLength = strlen(baseMessage) + 20; // +20 for the remaining time part
             powerUpMessage = new char[messageLength]; // Allocate memory for the combined message
-
+            
             // Format the message with the remaining time
             sprintf(powerUpMessage, "%s%d seconds remaining", baseMessage, remainingTime);
         } else {
             delete[] powerUpMessage; // Free the previously allocated memory
             powerUpMessage = nullptr; // Clear the pointer if no power-ups are active
         }
-            if (duration >= 10) {
-                isFlying=false;
-                characterY = fixedcharacterY;
-                powerUpActive2 = false;
-                time_t now = time(0);               // Get the current time in seconds
-                  tm *ltm = localtime(&now);          // Convert it to local time format
-
-                  // Print the message with the current time
-                  printf("I JUST RESET FLYING POWERUP at %02d:%02d:%02d\n",
-                         ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
-            }
+        if (duration >= 12) {
+            isFlying=false;
+            characterY = fixedcharacterY;
+            powerUpActive2 = false;
+            time_t now = time(0);               // Get the current time in seconds
+            tm *ltm = localtime(&now);          // Convert it to local time format
+            
+            // Print the message with the current time
+            printf("I JUST RESET FLYING POWERUP at %02d:%02d:%02d\n",
+                   ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
         }
+        
+    }
     updateStars();
     obstacleTimer += 0.02f;
+    powerUpTimer+=0.02;
     speedMultiplier+=0.001;
-    // Generate a new obstacle every 2 seconds
+    
+    if (powerUpTimer>=1.0f)
+    {
+        if (powerUpActive2)
+        {
+            generateCollectibleForFlying();
+        }
+        powerUpTimer=0.0f;
+    }
     if (obstacleTimer >= 2.0f) {
         generateObstacle();
         obstacleTimer = 0.0f;
+        
     }
-    collectibleRotationAngle += 0.5f; 
+    
+    collectibleRotationAngle += 0.5f;
     coinAngle += 1.0f;// Adjust this value for slower or faster rotation
-       if (collectibleRotationAngle >= 360.0f) {
-           collectibleRotationAngle -= 360.0f;  // Keep the angle within 0-360 degrees
-       }
+    if (collectibleRotationAngle >= 360.0f) {
+        collectibleRotationAngle -= 360.0f;  // Keep the angle within 0-360 degrees
+    }
     // Move obstacles to the left
     for (int i = 0; i < obstacles.size(); ++i) {
         obstacles[i].x -= (obstacleSpeed+speedMultiplier); // Move obstacle
-
+        
         // Check if an obstacle is off the screen
         if (obstacles[i].x < -30.0f) {
             obstacles.erase(obstacles.begin() + i);
@@ -825,25 +852,23 @@ void updateObstacles(int value) {
         
         // Check collision with character
         if (checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
-                    health--;
-                    // howa 5abat hena
-                   
-                    
-                    if (health <= 0) {
-                        gameEnded = true;
-                        // Stop updating the game
-                        return;
-                    }
-                    obstacles.erase(obstacles.begin() + i);
-                    --i;
-                }
-            // No need to erase the obstacle, just handle the recoil
-            // obstacles.erase(obstacles.begin() + i); // Remove this line
-            // --i; // Remove this line as well
+            health--;
+            // howa 5abat hena
+            
+            printf("HEALTH NOW %d\n",health);
+            if (health <= 0) {
+                gameEnded = true;
+            }
+            obstacles.erase(obstacles.begin() + i);
+            --i;
         }
-        
-
-
+        // No need to erase the obstacle, just handle the recoil
+        // obstacles.erase(obstacles.begin() + i); // Remove this line
+        // --i; // Remove this line as well
+    }
+    
+    
+    
     // Move collectibles to the left
     for (int i = 0; i < collecibles.size(); ++i) {
         collecibles[i].x -= (obstacleSpeed+speedMultiplier); // Move collectible to the left
@@ -855,7 +880,7 @@ void updateObstacles(int value) {
             continue;
         }
         if (checkCollisionCollectible(collecibles[i].x,collecibles[i].y, collecibles[i].height)) {
-           score+=scoreAdditionFactor;
+            score+=scoreAdditionFactor;
             collecibles.erase(collecibles.begin() + i);
             --i;
         }
@@ -874,11 +899,11 @@ void updateObstacles(int value) {
             powerUpStartTime = std::chrono::steady_clock::now(); // Start timer
             powerUpActive = true;
             time_t now = time(0);               // Get the current time in seconds
-              tm *ltm = localtime(&now);          // Convert it to local time format
-
-              // Print the message with the current time
-              printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
-                     ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+            tm *ltm = localtime(&now);          // Convert it to local time format
+            
+            // Print the message with the current time
+            printf("I JUST ACTIVATED COIN POWERUP at %02d:%02d:%02d\n",
+                   ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
             coins.erase(coins.begin() + i);
             --i;
         }
@@ -893,22 +918,22 @@ void updateObstacles(int value) {
             continue;
         }
         if (checkCollisionFlying(flyingPowerUp[i].x, flyingPowerUp[i].y)) {
-           // printf("I TOOK A FLYING POWER UP");
+            // printf("I TOOK A FLYING POWER UP");
             isFlying=true;
             powerUpStartTime2 = std::chrono::steady_clock::now(); // Start timer
             powerUpActive2 = true;
             time_t now = time(0);               // Get the current time in seconds
-              tm *ltm = localtime(&now);          // Convert it to local time format
-
-              // Print the message with the current time
-              printf("I JUST ACTIVATED FLYING POWERUP at %02d:%02d:%02d\n",
-                     ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+            tm *ltm = localtime(&now);          // Convert it to local time format
+            
+            // Print the message with the current time
+            printf("I JUST ACTIVATED FLYING POWERUP at %02d:%02d:%02d\n",
+                   ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
             flyingPowerUp.erase(flyingPowerUp.begin() + i);
             --i;
         }
     }
-   
     
+}
     // Call this function again after 16 ms (~60 FPS)
     glutTimerFunc(16, updateObstacles, 0);
 
@@ -966,28 +991,32 @@ void specialKeyUp(int key, int x, int y) {
 //----------------------------- CHARACTER ----------------------------
 
 void updateCharacter(int value) {
-    if (isJumping) {
-        if (characterY < maxjumpHeight) {
-            characterY += jumpSpeed;
-        } else {
-            isJumping = false;  // Stop jumping when max height is reached
-        }
-    } else if (characterY > fixedcharacterY) {
-        characterY -= gravity;  // Gravity pulls the character back down
-    } else {
-        characterY = fixedcharacterY;  // Ensure the character stays at ground level after falling
-    
-
-    }
-    
-    if (isFlying)
+    if (!gameEnded)
     {
-        characterY = windowHeight - 105.0f;
+        if (isJumping) {
+            if (characterY < maxjumpHeight) {
+                characterY += jumpSpeed;
+            } else {
+                isJumping = false;  // Stop jumping when max height is reached
+            }
+        } else if (characterY > fixedcharacterY) {
+            characterY -= gravity;  // Gravity pulls the character back down
+        } else {
+            characterY = fixedcharacterY;  // Ensure the character stays at ground level after falling
+            
+            
+        }
         
+        if (isFlying)
+        {
+            characterY = windowHeight - 105.0f;
+            
+        }
+        
+        glutPostRedisplay(); // Request a redraw
     }
-
-    glutPostRedisplay(); // Request a redraw
-    glutTimerFunc(16, updateCharacter, 0); // Call this function again after 16 ms
+        glutTimerFunc(16, updateCharacter, 0); // Call this function again after 16 ms
+    
 }
 //----------------------------- CHARACTER ----------------------------
 
@@ -1090,7 +1119,7 @@ void display() {
         drawText(powerUpMessage, windowWidth - 400.0f, windowHeight - 70.0f);
 
       // 5 minutes is the game time
-        if (elapsedTime >= 60.0f) {
+        if (elapsedTime >= 50.0f) {
             gameEnded = true;
         }
     }
@@ -1099,8 +1128,11 @@ void display() {
 }
 
 void timer(int value) {
-    timeforBackgroundColor += 0.01f; // Update the time elapsed
-    glutPostRedisplay(); // Trigger a redraw
+    if (!gameEnded)
+    {
+        timeforBackgroundColor += 0.01f; // Update the time elapsed
+        glutPostRedisplay(); // Trigger a redraw
+    }
     glutTimerFunc(16, timer, 0); // Call timer again after 16 ms (~60 FPS)
 }
 
