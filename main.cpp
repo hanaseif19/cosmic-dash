@@ -5,9 +5,9 @@
 #include <iostream>
 #include <vector>
 #include <ctime>
-//#include <SDL.H>
-//#include <SDL_mixer.h>
-
+#include <SDL.H>
+#include <SDL_mixer.h>
+//
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 int windowWidth = 700;
 int windowHeight = 700;
@@ -16,6 +16,56 @@ bool gameEnded = false; // Variable to check if the game has ended
 float timeforBackgroundColor=0.0f;
 
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
+//-------------------------------- SOUND CONFIGURATIONS-----------------------------------
+
+Mix_Music* backgroundMusic = nullptr;
+
+// Function to initialize SDL_mixer and load background music
+void initAudio() {
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+    } else {
+        backgroundMusic = Mix_LoadMUS("/Users/hana/Desktop/GAME SOUND/gamebackgroundmusic.mp3"); // Load your background music
+        if (backgroundMusic == NULL) {
+            printf("Failed to load background music! SDL_mixer Error: %s\n", Mix_GetError());
+        }
+    }
+    Mix_VolumeMusic(45);
+}
+void playBackgroundMusic() {
+    if (Mix_PlayingMusic() == 0) { // Check if music is already playing
+        Mix_PlayMusic(backgroundMusic, -1); // -1 means loop indefinitely
+    }
+}
+void cleanupAudio() {
+    Mix_FreeMusic(backgroundMusic);
+    Mix_CloseAudio();
+}
+Uint32 freeSoundEffect(Uint32 interval, void* param);
+
+// Global variable to hold sound effect pointer (can be static)
+Mix_Chunk* currentSoundEffect = nullptr;
+void playSoundForDuration(const char* fileName, int durationMs, int volume) {
+    // Load the sound file
+    Mix_Chunk* soundEffect = Mix_LoadWAV(fileName);
+    if (soundEffect == NULL) {
+        std::cout << "Failed to load sound effect! SDL_mixer Error: " << Mix_GetError() << std::endl;
+        return;
+    }
+
+    Mix_VolumeChunk(soundEffect, volume); // Set volume
+    Mix_PlayChannel(-1, soundEffect, 0); // Play sound on the first available channel
+
+    SDL_AddTimer(durationMs, freeSoundEffect, soundEffect); // Pass the sound effect to free it later
+}
+
+// Callback function to free the sound effect after the duration
+Uint32 freeSoundEffect(Uint32 interval, void* param) {
+    Mix_Chunk* soundEffect = static_cast<Mix_Chunk*>(param); // Cast param back to Mix_Chunk*
+    Mix_FreeChunk(soundEffect); // Free the sound effect
+    return 0; // One-time timer, return 0 to stop the timer
+}
+//-------------------------------- SOUND CONFIGURATIONS-----------------------------------
 
 //-------------------------------- CHARACTER RELATED -----------------------------------
 int score = 0; //score
@@ -860,6 +910,8 @@ if (!gameEnded)
         
         if (checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
             health--;
+            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/collision.wav", 5000, 128);
+           
             
             printf("HEALTH NOW %d\n",health);
             if (health <= 0) {
@@ -884,6 +936,7 @@ if (!gameEnded)
         }
         if (checkCollisionCollectible(collecibles[i].x,collecibles[i].y, collecibles[i].height)) {
             score+=scoreAdditionFactor;
+            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/pickUp.mp3", 5000, 128);
             collecibles.erase(collecibles.begin() + i);
             --i;
         }
@@ -897,6 +950,8 @@ if (!gameEnded)
             continue;
         }
         if (checkCollisionCoin(coins[i].x,coins[i].y)) {
+            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/coin.wav", 5000, 128);
+
             scoreAdditionFactor=2;
             powerUpStartTime = std::chrono::steady_clock::now();
             powerUpActive = true;
@@ -918,6 +973,8 @@ if (!gameEnded)
             continue;
         }
         if (checkCollisionFlying(flyingPowerUp[i].x, flyingPowerUp[i].y)) {
+            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/powerupplane.wav", 5000, 128);
+
             isFlying=true;
             powerUpStartTime2 = std::chrono::steady_clock::now();
             powerUpActive2 = true;
@@ -1042,8 +1099,13 @@ void initStars(int numStars) {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-
+    if (!gameEnded) {
+           playBackgroundMusic();
+       }
     if (gameEnded) {
+        if (Mix_PlayingMusic()) {
+                   Mix_HaltMusic(); // Stop the background music
+               }
         
        if (health==0)
        {
@@ -1054,6 +1116,8 @@ void display() {
 
            drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
            
+           playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameWin.wav", 5000, 128);
+
 
        }
            else
@@ -1064,6 +1128,7 @@ void display() {
                glColor3f(1.0f, 1.0f, 1.0f);
 
                drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
+               playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameover.wav", 5000, 128);
                
            }
     }
@@ -1155,6 +1220,7 @@ int main(int argc, char** argv) {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     gluOrtho2D(0.0, windowWidth, 0.0, windowHeight);
     initStars(80);
+    initAudio();
     glutDisplayFunc(display);
     glutTimerFunc(0, updateCharacter, 0);
     glutTimerFunc(16, updateObstacles, 0);
@@ -1164,7 +1230,7 @@ int main(int argc, char** argv) {
     glutSpecialFunc(specialKeyPress);
     glutSpecialUpFunc(specialKeyUp);
     glutMainLoop();
-
+    cleanupAudio();
     return 0;
 }
 
@@ -1172,3 +1238,34 @@ int main(int argc, char** argv) {
 
 
 
+
+
+//// Function to play sound with specified file name, duration, and volume
+//void playSound(const char* fileName, int durationMs, int volume) {
+//    // Initialize SDL_mixer
+//    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+//        printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+//        return;
+//    }
+//
+//    // Load the sound file
+//    Mix_Chunk* soundEffect = Mix_LoadWAV(fileName);
+//    if (soundEffect == NULL) {
+//        printf("Failed to load sound effect! SDL_mixer Error: %s\n", Mix_GetError());
+//        Mix_CloseAudio();
+//        return;
+//    }
+//
+//    // Set the volume
+//    Mix_VolumeChunk(soundEffect, volume); // Volume ranges from 0 (mute) to 128 (max)
+//
+//    // Play the sound effect
+//    Mix_PlayChannel(-1, soundEffect, 0); // -1 means play on the first available channel
+//
+//    // Wait for the specified duration
+//    SDL_Delay(durationMs); // Delay in milliseconds
+//    // Clean up
+//    Mix_FreeChunk(soundEffect); // Free the sound effect
+//    Mix_CloseAudio(); // Close SDL_mixer
+//}
+//
