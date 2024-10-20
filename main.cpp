@@ -1175,12 +1175,12 @@ void display() {
 
         char scoreText[50];
         char timeString[50];
-        sprintf(timeString, "Remaining Time: %.2f seconds", remainingTime);
+        sprintf(timeString, "Remaining Time: %.2f sec", remainingTime);
         sprintf(scoreText, "Score: %d", score);
 
         glColor3f(1.0f, 1.0f, 1.0f);
-        drawText(scoreText, windowWidth - 200.0f, windowHeight - 20.0f);
-        drawText(timeString, windowWidth - 200.0f, windowHeight - 40.0f);
+        drawText(scoreText, windowWidth - 230.0f, windowHeight - 20.0f);
+        drawText(timeString, windowWidth - 230.0f, windowHeight - 40.0f);
         drawText(powerUpMessage, windowWidth - 400.0f, windowHeight - 70.0f);
         drawText(powerUpMessage2, windowWidth - 400.0f, windowHeight - 90.0f);
 
