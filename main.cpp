@@ -724,7 +724,7 @@ void generateCollectibleForFlying() {
         collectible.height = 20;
         std::srand(static_cast<unsigned int>(std::time(nullptr)));
         
-    collectible.y = 500 + std::rand() % (630 - 500 + 1);
+    collectible.y = 500 + std::rand() % (610 - 500 + 1);
         collecibles.push_back(collectible);
    
 }
