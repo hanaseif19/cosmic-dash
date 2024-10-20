@@ -811,7 +811,7 @@ if (!gameEnded)
         
         if (duration >= 12) {
             scoreAdditionFactor = 1;
-            powerUpActive = false; 
+            powerUpActive = false;
             time_t now = time(0);
             tm *ltm = localtime(&now);
             
@@ -894,11 +894,16 @@ if (!gameEnded)
            
             
             printf("HEALTH NOW %d\n",health);
-            if (health <= 0) {
-                gameEnded = true;
-            }
             obstacles.erase(obstacles.begin() + i);
             --i;
+            if (health <= 0) {
+                gameEnded = true;
+                printf("I SET GAME ENDED TO TRUE: %s\n", gameEnded ? "true" : "false");
+                glutPostRedisplay();
+            }
+              
+               
+           
         }
        
     }
@@ -1051,21 +1056,22 @@ void updateCharacter(int value) {
 
 //--------------------------------DISPLAY -----------------------------------
 void display() {
-    if (!gameStarted) {
-        
-          return;
-      }
+//    if (!gameStarted) {
+//        
+//          return;
+//      }
     glClear(GL_COLOR_BUFFER_BIT);
     if (!gameEnded) {
            playBackgroundMusic();
        }
     if (gameEnded) {
+        printf("GAME ENDED HEREE");
         glClear(GL_COLOR_BUFFER_BIT);
         if (Mix_PlayingMusic()) {
             Mix_HaltMusic();
         }
         if (health == 0) {
-            printf("I LOSTTTT");
+           
             char endMessage[50];
             sprintf(endMessage, "YOUU LOST:(( , Score : %d", score);
             glColor3f(1.0f, 1.0f, 1.0f);
@@ -1129,8 +1135,9 @@ void display() {
         drawText(powerUpMessage2, windowWidth - 400.0f, windowHeight - 90.0f);
 
       // 3 minutes is the game time
-        if (elapsedTime >= 180.0f) {
+        if (elapsedTime >= 5.0f) {
             gameEnded = true;
+            
         }
     }
 
@@ -1139,20 +1146,6 @@ void display() {
 
 //--------------------------------DISPLAY -----------------------------------
 
-
-//--------------- RESET GAME (WITH ORIGINAL HEALTH AND SCORE----------------------
-
-//void resetGame(int score)
-//{
-//    score=score;
-//    characterX=fixedcharacterX;
-//    characterY=fixedcharacterY;
-//    glutTimerFunc(0, updateCharacter, 0);
-//       glutTimerFunc(16, updateObstacles, 0);
-//       glutTimerFunc(0, timer, 0);
-//
-//    
-//}
 
 //-------------------------------- MAIN METHOD -----------------------------------
 
@@ -1177,7 +1170,6 @@ int main(int argc, char** argv) {
     cleanupAudio();
     return 0;
 }
-
 
 
 
