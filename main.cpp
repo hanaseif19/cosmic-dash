@@ -13,15 +13,14 @@ int windowWidth = 700;
 int windowHeight = 700;
 float elapsedTime = 0.0f; // to keep track of time to display it throughout the game
 bool gameEnded = false; // Variable to check if the game has ended
-float timeforBackgroundColor=0.0f;
 bool gameStarted = false; // Game state variable
 
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 //-------------------------------- SOUND CONFIGURATIONS-----------------------------------
+Uint32 freeSoundEffect(Uint32 interval, void* param);
 
 Mix_Music* backgroundMusic = nullptr;
-
-// Function to initialize SDL_mixer and load background music
+// to initialize the sdl mixer library and start playing the background music @volume 45 out of a maximum of 128
 void initAudio() {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
@@ -36,15 +35,14 @@ void initAudio() {
     Mix_VolumeMusic(45);
 }
 void playBackgroundMusic() {
-    if (Mix_PlayingMusic() == 0) { // Check if music is already playing
-        Mix_PlayMusic(backgroundMusic, -1); // -1 means loop indefinitely
+    if (Mix_PlayingMusic() == 0) {
+        Mix_PlayMusic(backgroundMusic, -1); // infinitely
     }
 }
 void cleanupAudio() {
     Mix_FreeMusic(backgroundMusic);
     Mix_CloseAudio();
 }
-Uint32 freeSoundEffect(Uint32 interval, void* param);
 
 // Global variable to hold sound effect pointer (can be static)
 Mix_Chunk* currentSoundEffect = nullptr;
@@ -96,15 +94,15 @@ struct Obstacle {
 };
 float speedMultiplier=0; // factor by which ill increase the distance moved by obstacles , power ups and collectibles to make everything faster as time progresses
 std::vector<Obstacle> obstacles;
-
 float obstacleTimer = 0.0f;
-float obstacleSpeed = 4.0f;
+float obstacleTimerMaxValue=2.0f; // how often are obstacles generates (increases as time passes to make it more difficult)
+float obstacleSpeed = 5.0f; // obstaclex-this (how much it moves every update)
 //-------------------------------- OBSTACLES RELATED -----------------------------------
 //-------------------------------- POWER-UPS RELATED -----------------------------------
 int timerPowerUpDisplay=0;
-char* powerUpMessage = nullptr;
-char* powerUpMessage2 = nullptr;
-float coinAngle = 0.0f;
+char* powerUpMessage = nullptr; // message for countdown coin power up (double score)
+char* powerUpMessage2 = nullptr; // message for countdown airplane power up (flying)
+float coinAngle = 0.0f; // since coin rotates in place
 struct powerUpCoin {
     float x;
     float y;
@@ -119,10 +117,10 @@ struct powerUpFly {
 };
 float powerUpTimer=0.0;
 std::vector<powerUpFly> flyingPowerUp; // data structure to hold of the all tha coins
-float timeElapsedPlane = 0.0f; // Time or frame counter
-const float oscillationAmplitude = 5.0f; // Amplitude of the oscillation
+float timeElapsedPlane = 0.0f; // related to planes animation
+const float oscillationAmplitude = 5.0f; // for the shaking of the airplane in place
 const float oscillationFrequency = 2.0f;
-std::chrono::time_point<std::chrono::steady_clock> powerUpStartTime;
+std::chrono::time_point<std::chrono::steady_clock> powerUpStartTime; // to keep them activated for a certain duration
 bool powerUpActive = false;
 std::chrono::time_point<std::chrono::steady_clock> powerUpStartTime2;
 bool powerUpActive2 = false;
@@ -161,55 +159,54 @@ void drawCircle(float x, float y, float radius, int segments) {
     glEnd();
 }
 void drawRocket(float x, float y) {
-    // Rocket body
-    glColor3f(0.1f, 0.1f, 0.2f);  // Dark Galactic Teal for the body
-    glBegin(GL_QUADS);  // Draw the main body
-        glVertex2f(x - 5, y);        // Bottom-left
-        glVertex2f(x + 5, y);        // Bottom-right
-        glVertex2f(x + 5, y + 30);   // Top-right
-        glVertex2f(x - 5, y + 30);   // Top-left
+   // the body of the rocket
+    glColor3f(0.1f, 0.1f, 0.2f);
+    glBegin(GL_QUADS);
+        glVertex2f(x - 5, y);
+        glVertex2f(x + 5, y);
+        glVertex2f(x + 5, y + 30);
+        glVertex2f(x - 5, y + 30);
     glEnd();
 
-    // Rocket nose cone
-    glColor3f(1.0f, 1.0f, 0.0f);  // Luminous Yellow for the nose
-    glBegin(GL_TRIANGLES);  // Draw the nose
-        glVertex2f(x - 5, y + 30); // Bottom-left of triangle
-        glVertex2f(x + 5, y + 30); // Bottom-right of triangle
-        glVertex2f(x, y + 45);      // Top of triangle (nose)
+  // the nose of the rocket
+    glColor3f(1.0f, 1.0f, 0.0f);
+    glBegin(GL_TRIANGLES);
+        glVertex2f(x - 5, y + 30);
+        glVertex2f(x + 5, y + 30);
+        glVertex2f(x, y + 45);
     glEnd();
 
-    // Rocket fins
-    glColor3f(1.0f, 1.0f, 1.0f);  // Lighter Galactic Teal for the fins
-    glBegin(GL_TRIANGLES);  // Left fin
-        glVertex2f(x - 5, y + 15); // Bottom-left of fin
-        glVertex2f(x - 10, y);      // Bottom-left corner
-        glVertex2f(x - 5, y);        // Top-left corner
+  // the fins bto3 el rocket
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glBegin(GL_TRIANGLES);
+        glVertex2f(x - 5, y + 15);
+        glVertex2f(x - 10, y);
+        glVertex2f(x - 5, y);
     glEnd();
 
-    glBegin(GL_TRIANGLES);  // Right fin
-        glVertex2f(x + 5, y + 15); // Bottom-right of fin
-        glVertex2f(x + 10, y);      // Bottom-right corner
-        glVertex2f(x + 5, y);        // Top-right corner
+    glBegin(GL_TRIANGLES);
+        glVertex2f(x + 5, y + 15);
+        glVertex2f(x + 10, y);
+        glVertex2f(x + 5, y);
     glEnd();
 }
 
-// Function to draw the star collectible
-void drawStarCollectible(float x, float y, float size) {
-    glPushMatrix();  // Save the current matrix state
+// to draw the sad face collectible
+void drawSadFace(float x, float y, float size) {
+    glPushMatrix();
     glTranslatef(x, y, 0.0f);
 glRotatef(collectibleRotationAngle, 0.0f, 0.0f, 1.0f);
         
-        // Move back to the origin to draw the star
         glTranslatef(-x, -y, 0.0f);
     // Draw Star (Polygon)
-    glBegin(GL_POLYGON); // Start drawing the star shape
-    glColor3f(0.0f, 1.0f, 1.0f); // Star color: cyan
+    glBegin(GL_POLYGON);
+    glColor3f(0.0f, 1.0f, 1.0f);
     
-    glVertex2f(x-size/2, y); // Define the vertex
-    glVertex2f(x+size/2, y); // Define the vertex
+    glVertex2f(x-size/2, y);
+    glVertex2f(x+size/2, y);
     glVertex2f(x+size/2, y+size);
     glVertex2f(x-size/2, y+size);
-    glEnd(); // End the star drawing
+    glEnd();
 
     glColor3f(0.0f, 0.0f, 0.0f);
     
@@ -223,27 +220,28 @@ glRotatef(collectibleRotationAngle, 0.0f, 0.0f, 1.0f);
     glColor3d(1.0, 0.0, 0.0);
     glBegin(GL_LINE_STRIP);
     for (int i = 0; i <= 180; i++) {
-        float angle = i * M_PI / 180.0f; // Angle for smile arc
-        float vertexX = x + (size * 0.4f) * cos(angle); // X coordinate for smile
-        float vertexY =   (y - (size * 0.2f) + (size * 0.2f) * sin(angle)); // Y coordinate for smile
+        float angle = i * M_PI / 180.0f;
+        float vertexX = x + (size * 0.4f) * cos(angle);
+        float vertexY =   (y - (size * 0.2f) + (size * 0.2f) * sin(angle));
         glVertex2f(vertexX, vertexY+15);
     }
     
     glEnd();
-    glPopMatrix();  // Restore the previous matrix state
+    glPopMatrix();
 
    
 }
+// to draw the stars that animate up in the backgroubd
 void drawDiamond(float x, float y, float size, float brightness) {
-    // Ensure brightness is clamped between 0.5 and 1.0 for better visibility
+   
     brightness = std::max(0.5f, std::min(brightness, 1.0f));
 
-    glColor3f(brightness, brightness, brightness); // Set color based on brightness
+    glColor3f(brightness, brightness, brightness);
     glBegin(GL_QUADS);
-        glVertex2f(x, y + size);     // Top vertex
-        glVertex2f(x + size, y);     // Right vertex
-        glVertex2f(x, y - size);     // Bottom vertex
-        glVertex2f(x - size, y);     // Left vertex
+        glVertex2f(x, y + size);
+        glVertex2f(x + size, y);
+        glVertex2f(x, y - size);
+        glVertex2f(x - size, y);
     glEnd();
 }
 
@@ -264,58 +262,6 @@ void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
     glEnd();
 }
 
-//void drawCharacter() {
-//    glPushMatrix(); // Save the current transformation state
-//
-//    // Check if the character is flying and adjust its position
-//    if (isFlying) {
-//        characterY = windowHeight - 200.0f; // Position the character at the ceiling
-//       //printf("HES FLYINGG");
-//        
-//        // Move the character to its position before scaling
-//        glTranslatef(characterX, characterY, 0.0f);
-//        
-//        // If flying, reflect the character vertically
-//        glScalef(1.0f, -1.0f, 1.0f); // Flip in the Y direction
-//    } else {
-//        // For normal walking position, just translate
-//        glTranslatef(characterX, characterY, 0.0f);
-//    }
-//
-//    // Draw the character
-//    glColor3f(0.3f, 0.8f, 0.3f);
-//    drawCircle(0.0f, -duckingDistance, 30.0f, 50); // Centered at the origin
-//
-//    glColor3f(1.0f, 0.4f, 0.5f);
-//    drawTriangle(-15.0f, 25.0f - duckingDistance, 15.0f, 25.0f - duckingDistance, 0.0f, 60.0f - duckingDistance);
-//    
-//    glColor3f(1.0f, 1.0f, 1.0f);
-//    drawCircle(-10.0f, 10.0f - duckingDistance, 10.0f, 30);
-//    drawCircle(15.0f, 10.0f - duckingDistance, 10.0f, 30);
-//    
-//    glColor3f(0.0f, 0.0f, 0.0f);
-//    drawCircle(-8.0f, 12.0f - duckingDistance, 4.0f, 20);
-//    drawCircle(17.0f, 12.0f - duckingDistance, 4.0f, 20);
-//    
-//    glColor3f(1.0f, 0.8f, 0.3f);
-//    glBegin(GL_LINES);
-//    glVertex2f(-20.0f, -10.0f - duckingDistance-15); glVertex2f(-50.0f, -150.0f);
-//    glVertex2f(-10.0f, -10.0f - duckingDistance-15); glVertex2f(-20.0f, -150.0f);
-//    glVertex2f(0.0f, -10.0f - duckingDistance-15); glVertex2f(10.0f, -150.0f);
-//    glVertex2f(10.0f, -10.0f - duckingDistance-15); glVertex2f(40.0f, -150.0f);
-//    glEnd();
-//
-//    glColor3f(1.0f, 0.0f, 1.0f);
-//    glPointSize(5.0f);
-//    glBegin(GL_POINTS);
-//    glVertex2f(-50.0f, -148);
-//    glVertex2f(-20.0f, -148);
-//    glVertex2f(10.0f, -148);
-//    glVertex2f(40.0f, -148);
-//    glEnd();
-//
-//    glPopMatrix(); // Restore the previous transformation state
-//}
 void drawCharacter() {
 
     glPushMatrix();
@@ -324,31 +270,29 @@ void drawCharacter() {
         glTranslatef(0,characterY+60+125, 0.0f);
         glScalef(1.0f, -1.0f, 1.0f);
         glTranslatef(0, -(characterY+60), 0.0f);
-//        glTranslatef(0, (characterY+60), 0.0f);
 
         }
-    // Body color (dark blue/purple for space theme)
-    glColor3f(0.2f, 0.2f, 0.6f);  // Dark blue body
+   // body
+    glColor3f(0.2f, 0.2f, 0.6f);
     drawCircle(characterX, characterY - duckingDistance, 30.0f, 50);
 
-    // Triangle color (glowing neon green/cyan for a futuristic look)
-    glColor3f(0.0f, 1.0f, 0.6f);  // Neon cyan
+    glColor3f(0.0f, 1.0f, 0.6f);
     drawTriangle(characterX - 15, characterY + 25 - duckingDistance,
                  characterX + 15, characterY + 25 - duckingDistance,
                  characterX, characterY + 60 - duckingDistance);
 
-    // Eyes (bright white with a glowing blue effect)
-    glColor3f(1.0f, 1.0f, 1.0f);  // Bright white eyes
+   //eyes
+    glColor3f(1.0f, 1.0f, 1.0f);
     drawCircle(characterX - 10, characterY + 10 - duckingDistance, 10.0f, 30);
     drawCircle(characterX + 15, characterY + 10 - duckingDistance, 10.0f, 30);
 
-    // Pupils (glowing light blue)
-    glColor3f(0.0f, 0.0f, 0.0f);  // Light blue pupils
+    //pupils
+    glColor3f(0.0f, 0.0f, 0.0f);
     drawCircle(characterX - 8.0, characterY + 12 - duckingDistance, 4.0f, 20);
     drawCircle(characterX + 17, characterY + 12 - duckingDistance, 4.0f, 20);
 
-    // Arms/legs (light purple or cyan)
-    glColor3f(0.4f, 0.3f, 0.7f);  // Light purple for arms/legs
+//legs
+    glColor3f(0.4f, 0.3f, 0.7f);
     glBegin(GL_LINES);
     glVertex2f(characterX - 20, characterY - 10 - duckingDistance - 16); glVertex2f(characterX - 50, characterY - 150);
     glVertex2f(characterX - 10, characterY - 10 - duckingDistance - 16); glVertex2f(characterX - 20, characterY - 150);
@@ -356,8 +300,9 @@ void drawCharacter() {
     glVertex2f(characterX + 10, characterY - 10 - duckingDistance - 16); glVertex2f(characterX + 40, characterY - 150);
     glEnd();
 
-    // Points (glowing white or light blue for accents)
-    glColor3f(0.5f, 0.8f, 1.0f);  // Light blue points
+   //points
+    
+    glColor3f(0.5f, 0.8f, 1.0f);
     glPointSize(5.0f);
     glBegin(GL_POINTS);
     glVertex2f(characterX - 50, characterY - 148);
@@ -381,11 +326,11 @@ void drawText(const char* text, float x, float y) {
 
 void drawHealth() {
    
-        float spacing = 35.0f; // Spacing between rockets
-        float startX = 25.0f;  // Starting x position
+        float spacing = 35.0f;
+        float startX = 25.0f;
 
         for (int i = 0; i < health; i++) {
-            drawRocket(startX + i * spacing, windowHeight-50); // Draw rockets horizontally
+            drawRocket(startX + i * spacing, windowHeight-50);
         }
 }
 void drawObstacle(float x, float y, float height) {
@@ -398,52 +343,48 @@ void drawObstacle(float x, float y, float height) {
     glColor3f(0.0f, 1.0f, 0.0f);
     drawCircle(x - 15.0f, y - 2.5f, 1.25f, 20);
     drawCircle(x, y - 2.5f, 1.25f, 20);
-    drawCircle(x + 15.0f, y - 2.5f, 1.25f, 20); // Right light
-
-    // Optionally, you can add a glowing effect around the lights
-    glColor4f(0.0f, 1.0f, 0.0f, 0.5f); // Semi-transparent green for glow
-    drawCircle(x - 15.0f, y - 2.5f, 2.0f, 20); // Left glow
-    drawCircle(x, y - 2.5f, 2.0f, 20); // Center glow
-    drawCircle(x + 15.0f, y - 2.5f, 2.0f, 20); // Right glow
+    drawCircle(x + 15.0f, y - 2.5f, 1.25f, 20);
+    glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
+    drawCircle(x - 15.0f, y - 2.5f, 2.0f, 20);
+    drawCircle(x, y - 2.5f, 2.0f, 20);
+    drawCircle(x + 15.0f, y - 2.5f, 2.0f, 20);
 }
 
 void drawPlane(float x, float y) {
-    // Update timeElapsed for the animation
-    timeElapsedPlane += 0.1f; // Adjust this value for speed of animation
+    timeElapsedPlane += 0.1f;
 
-    // Calculate the new Y position based on a sine wave
+   
     float oscillation = oscillationAmplitude * sin(oscillationFrequency * timeElapsedPlane);
     float animatedY = y + oscillation;
 
-    glPushMatrix(); // Save the current transformation state
+    glPushMatrix();
 
-    // Scale down the plane
-    glScalef(0.2f, 0.2f, 1.0f); // Scale down by 50%
+   
+    glScalef(0.2f, 0.2f, 1.0f);
 
-    glColor3f(0.0f, 0.0f, 0.5f); // Navy blue (normalized values)
+    glColor3f(0.0f, 0.0f, 0.5f);
 
-    // Draw the main body (rectangle)
+  
     glBegin(GL_QUADS);
-    glVertex2f(x, animatedY);               // Left
-    glVertex2f(x + 240.0f, animatedY);      // Right
-    glVertex2f(x + 240.0f, animatedY + 50.0f); // Top right
-    glVertex2f(x, animatedY + 50.0f);       // Top left
+    glVertex2f(x, animatedY);
+    glVertex2f(x + 240.0f, animatedY);
+    glVertex2f(x + 240.0f, animatedY + 50.0f);
+    glVertex2f(x, animatedY + 50.0f);
     glEnd();
 
-    // Draw the nose (triangle) in light blue
-    glColor3f(0.5f, 0.7f, 1.0f); // Light blue nose
+    
+    glColor3f(0.5f, 0.7f, 1.0f);
     glBegin(GL_TRIANGLES);
-    glVertex2f(x + 240.0f, animatedY);        // Left corner of the nose
-    glVertex2f(x + 260.0f, animatedY + 25.0f); // Tip of the nose
-    glVertex2f(x + 240.0f, animatedY + 50.0f); // Top right of the body
+    glVertex2f(x + 240.0f, animatedY);
+    glVertex2f(x + 260.0f, animatedY + 25.0f);
+    glVertex2f(x + 240.0f, animatedY + 50.0f);
     glEnd();
 
-    // Draw the tail (triangle) in light blue
-    glColor3f(0.5f, 0.7f, 1.0f); // Light blue tail
+    glColor3f(0.5f, 0.7f, 1.0f);
     glBegin(GL_TRIANGLES);
-    glVertex2f(x, animatedY + 50.0f);          // Top left of the body
-    glVertex2f(x - 40.0f, animatedY + 90.0f);  // Top of the tail
-    glVertex2f(x, animatedY);                  // Bottom left of the body
+    glVertex2f(x, animatedY + 50.0f);
+    glVertex2f(x - 40.0f, animatedY + 90.0f);
+    glVertex2f(x, animatedY);
     glEnd();
 
     glColor3f(0.5f, 0.7f, 1.0f);
@@ -626,12 +567,6 @@ void drawCoin(float x, float y) {
 }
 
 
-
-
-
-
-
-
 //-------------------------------- DRAWING HELPERS -----------------------------------
 
 //-------------------------------- COLLISIONS -----------------------------------
@@ -646,10 +581,13 @@ bool checkCollision(float obstacleX,float obstacleY, float obstacleHeight) {
     {
         characterBottom=characterY-148;
         CharacterTop= characterY+60-duckingDistance;
+       
     }
+    
     else{
-        float characterBottom=characterY-60;
-        float CharacterTop= 650;
+        characterBottom=650-210;
+         CharacterTop= 650;
+
     }
     float obstacleRight= obstacleX+25;
     float obstacleTop=obstacleY+20;
@@ -700,10 +638,13 @@ bool checkCollisionFlying(float flyingX,float flyingY) {
     {
         characterBottom=characterY-148;
         CharacterTop= characterY+60-duckingDistance;
+       
     }
+    
     else{
-        float characterBottom=characterY-60;
-        float CharacterTop= windowHeight-50;
+        characterBottom=650-210;
+         CharacterTop= 650;
+
     }
     float flyingRight=flyingX+15;
     float flyingTop=flyingY+15;
@@ -725,10 +666,13 @@ bool checkCollisionCoin(float coinX,float coinY) {
     {
         characterBottom=characterY-148;
         CharacterTop= characterY+60-duckingDistance;
+       
     }
+    
     else{
-        float characterBottom=characterY-60;
-        float CharacterTop= windowHeight-50;
+        characterBottom=650-210;
+         CharacterTop= 650;
+
     }
     float coinRight=coinX+12.5;
     float coinTop=coinY+12.5;
@@ -742,7 +686,7 @@ bool checkCollisionCoin(float coinX,float coinY) {
 
 }
 //-------------------------------- COLLISIONS -----------------------------------
-//----------------------------- COLLECTIBLES ----------------------------
+//----------------------------- BACKGROUND ----------------------------
 void updateStars() {
     for (auto &star : stars) {
         star.brightness += star.speed;
@@ -753,9 +697,38 @@ void updateStars() {
         }
     }
 }
+void initStars(int numStars) {
+    srand(static_cast<unsigned>(time(0)));
+    for (int i = 0; i < numStars; i++) {
+        Star star;
+        star.x = rand() % windowWidth;
+       
+        star.y = rand() % 201 + 450;
+        star.size = rand() % 3 + 2;
+        star.brightness = static_cast<float>(rand() % 50 + 50) / 100.0f;
+
+        star.speed = static_cast<float>(rand() % 20 + 10) / 1000.0f;
+        stars.push_back(star);
+    }
+}
+//----------------------------- BACKGROUND ----------------------------
 //----------------------------- COLLECTIBLES ----------------------------
 
+void generateCollectibleForFlying() {
+    
+    
+   
+        Collectible collectible;
+        collectible.x = windowWidth;
+        collectible.height = 20;
+        std::srand(static_cast<unsigned int>(std::time(nullptr)));
+        
+    collectible.y = 500 + std::rand() % (630 - 500 + 1);
+        collecibles.push_back(collectible);
+   
+}
 
+//----------------------------- COLLECTIBLES ----------------------------
 
 //--------------------------OBSTACLE GENERATION AND UPDATE ----------------------------
 void generateObstacle() {
@@ -779,7 +752,7 @@ void generateObstacle() {
                coins.push_back(p);
         
     }
-    else if (timerPowerUpDisplay== 1 || timerPowerUpDisplay== 31)
+    else if (timerPowerUpDisplay== 8 || timerPowerUpDisplay== 31)
     {
         powerUpFly pf;
                pf.x = windowWidth;
@@ -798,44 +771,21 @@ void generateObstacle() {
             collectible.height = 20;
             collectible.y = (obstacle.y == 120) ? 350 : 140;
             collecibles.push_back(collectible);
+         
+        }
+        else
+        {
+            Collectible collectible2;
+            collectible2.x = windowWidth+175;
+            collectible2.height = 20;
+            collectible2.y = 140 + rand() % (450 - 140 + 1);
+            collecibles.push_back(collectible2);
         }
        
         
     }
-    if (!obstacles.empty()) {
-        // Check the last obstacle's X position and generate collectibles in between
-        for (size_t i = 0; i < obstacles.size() - 1; ++i) {
-            if (obstacles[i].x > 0 && obstacles[i + 1].x > obstacles[i].x + 100) { // Adjust space as needed
-                // Calculate the space between the two obstacles
-                float gap = obstacles[i + 1].x - obstacles[i].x;
-                int numCollectibles = gap / 500; // Increase divisor to reduce the number of collectibles
-
-                for (int j = 1; j <= numCollectibles; ++j) {
-                    Collectible collectible;
-                    collectible.x = obstacles[i].x + (j * 150); // Adjust spacing accordingly
-                    collectible.height = 20;
-                    collectible.y = 100 + static_cast<float>(rand()) / RAND_MAX * (500 - 100 - collectible.height);
-
-                    collecibles.push_back(collectible);
-                }
-            }
-        }
-    }
 
 
-}
-void generateCollectibleForFlying() {
-    
-    
-   
-        Collectible collectible;
-        collectible.x = windowWidth;
-        collectible.height = 20;
-        std::srand(static_cast<unsigned int>(std::time(nullptr)));
-        
-    collectible.y = 500 + std::rand() % (630 - 500 + 1);
-        collecibles.push_back(collectible);
-   
 }
 
 void updateObstacles(int value) {
@@ -874,7 +824,7 @@ if (!gameEnded)
         
         auto currentTime = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - powerUpStartTime2).count();
-        int remainingTime = 12 - duration;
+        int remainingTime = 10 - duration;
         
         if (remainingTime > 0) {
             const char* baseMessage = "Flying Active:  ";
@@ -886,7 +836,7 @@ if (!gameEnded)
             delete[] powerUpMessage2;
             powerUpMessage2 = nullptr;
         }
-        if (duration >= 12) {
+        if (duration >= 10) {
             isFlying=false;
             characterY = fixedcharacterY;
             powerUpActive2 = false;
@@ -901,6 +851,8 @@ if (!gameEnded)
     updateStars();
     obstacleTimer += 0.02f;
     powerUpTimer+=0.02;
+    gravity+=0.0002;
+   
     speedMultiplier+=0.001;
     
     if (powerUpTimer>=1.0f)
@@ -911,10 +863,15 @@ if (!gameEnded)
         }
         powerUpTimer=0.0f;
     }
-    if (obstacleTimer >= 2.0f) {
+    if (obstacleTimer >= obstacleTimerMaxValue && !(isFlying)) {
         generateObstacle();
         obstacleTimer = 0.0f;
         
+    }
+    obstacleTimerMaxValue-=0.0002;
+    if (obstacleTimerMaxValue<=0.5)
+    {
+        obstacleTimerMaxValue=0.5;
     }
     
     collectibleRotationAngle += 0.5f;
@@ -1092,34 +1049,7 @@ void updateCharacter(int value) {
 }
 //----------------------------- CHARACTER ----------------------------
 
-
-//----------------------------- BACKGROUND ANIMATION ----------------------------
-
-void initStars(int numStars) {
-    srand(static_cast<unsigned>(time(0)));
-    for (int i = 0; i < numStars; i++) {
-        Star star;
-        star.x = rand() % windowWidth;
-       
-        star.y = rand() % 201 + 450;
-        star.size = rand() % 3 + 2;
-        star.brightness = static_cast<float>(rand() % 50 + 50) / 100.0f;
-
-        star.speed = static_cast<float>(rand() % 20 + 10) / 1000.0f;
-        stars.push_back(star);
-    }
-}
-
-//----------------------------- BACKGROUND ANIMATION ----------------------------
-
-
-
-
-
 //--------------------------------DISPLAY -----------------------------------
-
-
-
 void display() {
     if (!gameStarted) {
         
@@ -1130,36 +1060,24 @@ void display() {
            playBackgroundMusic();
        }
     if (gameEnded) {
+        glClear(GL_COLOR_BUFFER_BIT);
         if (Mix_PlayingMusic()) {
-                   Mix_HaltMusic(); // Stop the background music
-               }
-        
-       if (health==0)
-       {
-           printf("I LOSTTTT");
-           char endMessage[50];
-           sprintf(endMessage, "YOUU LOST:(( , Score : %d",score);
-           
-           glColor3f(1.0f, 1.0f, 1.0f);
-
-           drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
-           
-           playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameWin.wav", 5000, 128);
-
-
-       }
-           else
-           {
-               
-               char endMessage[50];
-               sprintf(endMessage, "Game End! Score: %d", score);
-               
-               glColor3f(1.0f, 1.0f, 1.0f);
-
-               drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
-               playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameover.wav", 5000, 128);
-               
-           }
+            Mix_HaltMusic();
+        }
+        if (health == 0) {
+            printf("I LOSTTTT");
+            char endMessage[50];
+            sprintf(endMessage, "YOUU LOST:(( , Score : %d", score);
+            glColor3f(1.0f, 1.0f, 1.0f);
+            drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
+            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameWin.wav", 5000, 128);
+        } else {
+            char endMessage[50];
+            sprintf(endMessage, "Game End! Score: %d", score);
+            glColor3f(1.0f, 1.0f, 1.0f);
+            drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
+            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameover.wav", 5000, 128);
+        }
     }
     else {
        
@@ -1177,7 +1095,7 @@ void display() {
             drawObstacle(obstacle.x, obstacle.y, obstacle.height);
         }
         for (const auto& collectible : collecibles) {
-            drawStarCollectible(collectible.x, collectible.y, 30);
+            drawSadFace(collectible.x, collectible.y, 30);
         }
         for (const auto& coin : coins) {
             drawCoin(coin.x,coin.y);
@@ -1187,8 +1105,14 @@ void display() {
         }
         drawGround();
 
-        // Time Tracking
         static float lastTime = 0.0f;
+        static bool timerInitialized = false;
+      
+        if (!timerInitialized) {
+            lastTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+            timerInitialized = true;
+        }
+
         float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
         elapsedTime += currentTime - lastTime;
         lastTime = currentTime;
@@ -1211,15 +1135,6 @@ void display() {
     }
 
     glFlush();
-}
-
-void timer(int value) {
-    if (!gameEnded)
-    {
-        timeforBackgroundColor += 0.01f;
-        glutPostRedisplay();
-    }
-    glutTimerFunc(16, timer, 0);
 }
 
 //--------------------------------DISPLAY -----------------------------------
@@ -1254,7 +1169,6 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutTimerFunc(0, updateCharacter, 0);
     glutTimerFunc(16, updateObstacles, 0);
-    glutTimerFunc(0, timer, 0);
     glutKeyboardFunc(keyPress);
     glutKeyboardUpFunc(keyUp);
     glutSpecialFunc(specialKeyPress);
