@@ -14,7 +14,8 @@ int windowHeight = 700;
 float elapsedTime = 0.0f; // to keep track of time to display it throughout the game
 bool gameEnded = false; // Variable to check if the game has ended
 bool gameStarted = false; // Game state variable
-
+std::chrono::time_point<std::chrono::steady_clock> recoilStartTime;
+bool recoilActive = false;
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 //-------------------------------- SOUND CONFIGURATIONS-----------------------------------
 Uint32 freeSoundEffect(Uint32 interval, void* param);
@@ -848,6 +849,24 @@ if (!gameEnded)
         }
         
     }
+    if (recoilActive) {
+          auto currentTime = std::chrono::steady_clock::now();
+          // Calculate the duration in milliseconds
+          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - recoilStartTime).count();
+          
+          // Print the duration that has passed
+          printf("Duration since recoil started: %lld ms\n", duration);
+
+          if (duration >= 1200) { // Check for 50 milliseconds recoil duration
+              recoilActive = false;
+              time_t now = time(0);
+              tm *ltm = localtime(&now);
+              
+              printf("I JUST RESET RECOIL at %02d:%02d:%02d\n",
+                     ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
+          }
+     
+      }
     updateStars();
     obstacleTimer += 0.02f;
     powerUpTimer+=0.02;
@@ -863,7 +882,15 @@ if (!gameEnded)
         }
         powerUpTimer=0.0f;
     }
-    if (obstacleTimer >= obstacleTimerMaxValue && !(isFlying)) {
+    auto currentTime = std::chrono::steady_clock::now();
+           // Calculate the duration in milliseconds
+           auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - recoilStartTime).count();
+//           
+//           // Print the duration that has passed
+//           printf("Duration since recoil started: %lld ms\n", duration);
+
+          
+    if (obstacleTimer >= obstacleTimerMaxValue && !(isFlying) && duration>=5000) {
         generateObstacle();
         obstacleTimer = 0.0f;
         
@@ -880,7 +907,8 @@ if (!gameEnded)
         collectibleRotationAngle -= 360.0f;
     }
     for (int i = 0; i < obstacles.size(); ++i) {
-        obstacles[i].x -= (obstacleSpeed+speedMultiplier);
+        obstacles[i].x += (recoilActive ? 5 : -(obstacleSpeed + speedMultiplier));
+
         
         if (obstacles[i].x < -30.0f) {
             obstacles.erase(obstacles.begin() + i);
@@ -888,14 +916,16 @@ if (!gameEnded)
             continue;
         }
         
-        if (checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
+        if (!recoilActive && checkCollision(obstacles[i].x,obstacles[i].y, obstacles[i].height)) {
             health--;
+            recoilStartTime = std::chrono::steady_clock::now();
+                      recoilActive = true;
             playSoundForDuration("/Users/hana/Desktop/GAME SOUND/collision.wav", 5000, 128);
            
             
             printf("HEALTH NOW %d\n",health);
-            obstacles.erase(obstacles.begin() + i);
-            --i;
+//            obstacles.erase(obstacles.begin() + i);
+//            --i;
             if (health <= 0) {
                 gameEnded = true;
                 printf("I SET GAME ENDED TO TRUE: %s\n", gameEnded ? "true" : "false");
@@ -911,7 +941,8 @@ if (!gameEnded)
     
     
     for (int i = 0; i < collecibles.size(); ++i) {
-        collecibles[i].x -= (obstacleSpeed+speedMultiplier);
+        collecibles[i].x += (recoilActive ? 5 : -(obstacleSpeed + speedMultiplier));
+
         
        
         if (collecibles[i].x < -30.0f) {
@@ -927,7 +958,8 @@ if (!gameEnded)
         }
     }
     for (int i = 0; i < coins.size(); ++i) {
-        coins[i].x -= (obstacleSpeed+speedMultiplier);
+        coins[i].x+= (recoilActive ? 5 : -(obstacleSpeed + speedMultiplier));
+
         
         if (coins[i].x < -30.0f) {
             coins.erase(coins.begin() + i);
@@ -950,7 +982,8 @@ if (!gameEnded)
         }
     }
     for (int i = 0; i < flyingPowerUp.size(); ++i) {
-        flyingPowerUp[i].x -= (obstacleSpeed+speedMultiplier);
+        flyingPowerUp[i].x += (recoilActive ? 5 : -(obstacleSpeed + speedMultiplier));
+
         
         if (flyingPowerUp[i].x < -30.0f) {
             flyingPowerUp.erase(flyingPowerUp.begin() + i);
@@ -1056,10 +1089,6 @@ void updateCharacter(int value) {
 
 //--------------------------------DISPLAY -----------------------------------
 void display() {
-//    if (!gameStarted) {
-//        
-//          return;
-//      }
     glClear(GL_COLOR_BUFFER_BIT);
     if (!gameEnded) {
            playBackgroundMusic();
@@ -1084,6 +1113,7 @@ void display() {
             drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
             playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameover.wav", 5000, 128);
         }
+      
     }
     else {
        
@@ -1135,7 +1165,7 @@ void display() {
         drawText(powerUpMessage2, windowWidth - 400.0f, windowHeight - 90.0f);
 
       // 3 minutes is the game time
-        if (elapsedTime >= 5.0f) {
+        if (elapsedTime >= 120.0f) {
             gameEnded = true;
             
         }
