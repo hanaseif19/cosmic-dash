@@ -7,7 +7,6 @@
 #include <ctime>
 #include <SDL.H>
 #include <SDL_mixer.h>
-//
 //-------------------------------- GENERAL CONFIGURATIONS-----------------------------------
 int windowWidth = 700;
 int windowHeight = 700;
@@ -334,21 +333,34 @@ void drawHealth() {
             drawRocket(startX + i * spacing, windowHeight-50);
         }
 }
+void drawCircleT(float x, float y, float radius, int numSegments) {
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(x, y);
+
+    for (int i = 0; i <= numSegments; ++i) {
+        float angle = 2.0f * M_PI * i / numSegments;
+        float dx = radius * cos(angle);
+        float dy = radius * sin(angle);
+        glVertex2f(x + dx, y + dy);
+    }
+
+    glEnd();
+}
 void drawObstacle(float x, float y, float height) {
     glColor3f(0.5f, 0.5f, 0.5f);
     drawEllipse(x, y, 25.0f, 15.0f, 50);
 
     glColor3f(0.1f, 0.4f, 0.8f);
-    drawCircle(x, y + 10.0f, 10.0f, 30);
+    drawCircleT(x, y + 10.0f, 10.0f, 30);
 
     glColor3f(0.0f, 1.0f, 0.0f);
-    drawCircle(x - 15.0f, y - 2.5f, 1.25f, 20);
-    drawCircle(x, y - 2.5f, 1.25f, 20);
-    drawCircle(x + 15.0f, y - 2.5f, 1.25f, 20);
+    drawCircleT(x - 15.0f, y - 2.5f, 1.25f, 20);
+    drawCircleT(x, y - 2.5f, 1.25f, 20);
+    drawCircleT(x + 15.0f, y - 2.5f, 1.25f, 20);
     glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
-    drawCircle(x - 15.0f, y - 2.5f, 2.0f, 20);
-    drawCircle(x, y - 2.5f, 2.0f, 20);
-    drawCircle(x + 15.0f, y - 2.5f, 2.0f, 20);
+    drawCircleT(x - 15.0f, y - 2.5f, 2.0f, 20);
+    drawCircleT(x, y - 2.5f, 2.0f, 20);
+    drawCircleT(x + 15.0f, y - 2.5f, 2.0f, 20);
 }
 
 void drawPlane(float x, float y) {
@@ -529,7 +541,7 @@ void drawCoin(float x, float y) {
     glColor3f(1.0f, 0.84f, 0.0f);
     drawCircle(0.0f, 0.0f, 25.0f, 25);
     glColor3f(0.8f, 0.7f, 0.0f);
-    drawCircle(0.0f, 0.0f, 15.0f, 15);
+    drawCircleT(0.0f, 0.0f, 15.0f, 15);
 
     glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_TRIANGLES);
@@ -895,7 +907,7 @@ if (!gameEnded)
         obstacleTimer = 0.0f;
         
     }
-    obstacleTimerMaxValue-=0.0002;
+    obstacleTimerMaxValue-=0.0001;
     if (obstacleTimerMaxValue<=0.5)
     {
         obstacleTimerMaxValue=0.5;
@@ -1149,13 +1161,21 @@ void display() {
             timerInitialized = true;
         }
 
+        float totalTime = 120.0f;
         float currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
         elapsedTime += currentTime - lastTime;
         lastTime = currentTime;
 
+     
+        float remainingTime = totalTime - elapsedTime;
+
+        if (remainingTime < 0) {
+            remainingTime = 0;
+        }
+
         char scoreText[50];
         char timeString[50];
-        sprintf(timeString, "Time: %.2f seconds", elapsedTime);
+        sprintf(timeString, "Remaining Time: %.2f seconds", remainingTime);
         sprintf(scoreText, "Score: %d", score);
 
         glColor3f(1.0f, 1.0f, 1.0f);
@@ -1164,7 +1184,7 @@ void display() {
         drawText(powerUpMessage, windowWidth - 400.0f, windowHeight - 70.0f);
         drawText(powerUpMessage2, windowWidth - 400.0f, windowHeight - 90.0f);
 
-      // 3 minutes is the game time
+      // 2 minutes is the game time
         if (elapsedTime >= 120.0f) {
             gameEnded = true;
             
