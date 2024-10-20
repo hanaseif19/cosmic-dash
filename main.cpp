@@ -758,6 +758,7 @@ void generateObstacle() {
     timerPowerUpDisplay++;
     if (timerPowerUpDisplay==2 || timerPowerUpDisplay==22 || timerPowerUpDisplay==17)
     {
+        printf("COINNN");
         powerUpCoin p;
                p.x = windowWidth;
        
@@ -767,6 +768,7 @@ void generateObstacle() {
     }
     else if (timerPowerUpDisplay== 8 || timerPowerUpDisplay== 31)
     {
+        printf("PLANE");
         powerUpFly pf;
                pf.x = windowWidth;
        
@@ -902,7 +904,7 @@ if (!gameEnded)
 //           printf("Duration since recoil started: %lld ms\n", duration);
 
           
-    if (obstacleTimer >= obstacleTimerMaxValue && !(isFlying) && duration>=5000) {
+    if (obstacleTimer >= obstacleTimerMaxValue && !(isFlying) && duration>=3500) {
         generateObstacle();
         obstacleTimer = 0.0f;
         
@@ -1187,6 +1189,7 @@ void display() {
       // 2 minutes is the game time
         if (elapsedTime >= 120.0f) {
             gameEnded = true;
+            glutPostRedisplay();
             
         }
     }
