@@ -26,7 +26,7 @@ void initAudio() {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
     } else {
-        backgroundMusic = Mix_LoadMUS("/Users/hana/Desktop/GAME SOUND/gamebackgroundmusic.mp3"); // Load your background music
+        backgroundMusic = Mix_LoadMUS("gamebackgroundmusic.mp3"); // Load your background music
         if (backgroundMusic == NULL) {
             printf("Failed to load background music! SDL_mixer Error: %s\n", Mix_GetError());
         }
@@ -920,7 +920,7 @@ if (!gameEnded)
             health--;
             recoilStartTime = std::chrono::steady_clock::now();
                       recoilActive = true;
-            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/collision.wav", 5000, 128);
+            playSoundForDuration("collision.wav", 5000, 128);
            
             
             printf("HEALTH NOW %d\n",health);
@@ -952,7 +952,7 @@ if (!gameEnded)
         }
         if (checkCollisionCollectible(collecibles[i].x,collecibles[i].y, collecibles[i].height)) {
             score+=scoreAdditionFactor;
-            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/pickUp.mp3", 5000, 128);
+            playSoundForDuration("pickUp.mp3", 5000, 128);
             collecibles.erase(collecibles.begin() + i);
             --i;
         }
@@ -967,7 +967,7 @@ if (!gameEnded)
             continue;
         }
         if (checkCollisionCoin(coins[i].x,coins[i].y)) {
-            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/coin.wav", 5000, 128);
+            playSoundForDuration("coin.wav", 5000, 128);
 
             scoreAdditionFactor=2;
             powerUpStartTime = std::chrono::steady_clock::now();
@@ -991,7 +991,7 @@ if (!gameEnded)
             continue;
         }
         if (checkCollisionFlying(flyingPowerUp[i].x, flyingPowerUp[i].y)) {
-            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/powerupplane.wav", 5000, 128);
+            playSoundForDuration("powerupplane.wav", 5000, 128);
 
             isFlying=true;
             powerUpStartTime2 = std::chrono::steady_clock::now();
@@ -1105,13 +1105,13 @@ void display() {
             sprintf(endMessage, "YOUU LOST:(( , Score : %d", score);
             glColor3f(1.0f, 1.0f, 1.0f);
             drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
-            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameWin.wav", 5000, 128);
+            playSoundForDuration("gameWin.wav", 5000, 128);
         } else {
             char endMessage[50];
             sprintf(endMessage, "Game End! Score: %d", score);
             glColor3f(1.0f, 1.0f, 1.0f);
             drawText(endMessage, windowWidth / 2 - 100, windowHeight / 2);
-            playSoundForDuration("/Users/hana/Desktop/GAME SOUND/gameover.wav", 5000, 128);
+            playSoundForDuration("gameover.wav", 5000, 128);
         }
       
     }
